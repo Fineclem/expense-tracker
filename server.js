@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 
 const DB_DIR = process.env.NODE_ENV === 'production' 
-  ? path.join('/opt/render/project/src/data')
+  ? '/opt/render/project/src/data'
   : path.join(__dirname, 'data');
 const DB_PATH = path.join(DB_DIR, 'db.sqlite');
 const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret';

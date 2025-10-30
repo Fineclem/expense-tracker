@@ -34,8 +34,81 @@
 
   function handleLogout(e) {
     e.preventDefault();
-    localStorage.removeItem("token");
-    window.location.href = "/login";
+    
+    // Show logout confirmation and loading state
+    const logoutBtn = e.target.closest('#logout-btn');
+    const originalContent = logoutBtn.innerHTML;
+    
+    // Update button to show loading
+    logoutBtn.disabled = true;
+    logoutBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    logoutBtn.title = 'Logging out...';
+    
+    // Show logout toast
+    showLogoutToast('Logging out...', 'info');
+    
+    // Simulate logout process (remove token and redirect)
+    setTimeout(() => {
+      localStorage.removeItem("token");
+      showLogoutToast('Logged out successfully!', 'success');
+      
+      // Redirect after a brief delay
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 800);
+    }, 500);
+  }
+
+  // Logout toast function
+  function showLogoutToast(message, type = 'info') {
+    // Remove existing logout toast
+    const existingToast = document.getElementById('logout-toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.id = 'logout-toast';
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = `
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      min-width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: none;
+      animation: slideInRight 0.3s ease-out;
+    `;
+
+    const iconMap = {
+      'info': 'bi-info-circle',
+      'success': 'bi-check-circle',
+      'warning': 'bi-exclamation-triangle'
+    };
+
+    toast.innerHTML = `
+      <div class="d-flex align-items-center">
+        <i class="bi ${iconMap[type]} me-2"></i>
+        <div class="flex-grow-1">${message}</div>
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="alert"></button>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Auto remove after delay
+    if (type === 'info') {
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.style.animation = 'slideOutRight 0.3s ease-in';
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.remove();
+            }
+          }, 300);
+        }
+      }, 2000);
+    }
   }
 
   // Check authentication and load user info
@@ -271,7 +344,7 @@
         loadDashboardData();
         break;
       case "expenses":
-        // Focus on amount input when switching to expenses
+        
         setTimeout(() => {
           const amountInput = document.querySelector(
             '#expenses-section input[name="amount"]'
@@ -282,11 +355,11 @@
         }, 100);
         break;
       case "budget":
-        // Refresh budget data
+        
         loadBudget();
         break;
       case "reports":
-        // Load reports if section exists
+        
         if (document.getElementById("reports-section")) {
           loadReports();
         } else {
@@ -294,8 +367,8 @@
         }
         break;
       case "categories":
-        // Show coming soon for categories
-        showComingSoonMessage("categories");
+        // Load categories data
+        loadCategories();
         break;
     }
   }
@@ -389,7 +462,7 @@
     document.getElementById("loading-expenses").style.display = "none";
   }
 
-  // Load expenses with enhanced UI
+  // Load expenses 
   function loadExpenses() {
     return api("/expenses/list")
       .then((rows) => {
@@ -431,7 +504,7 @@
       });
   }
 
-  // Create expense element with modern styling
+  
   function createExpenseElement(expense, index) {
     const div = document.createElement("div");
     div.className = "expense-item fade-in";
@@ -472,7 +545,7 @@
               expense.created_at ? formatTime(expense.created_at) : ""
             }</div>
           </div>
-          <div class="dropdown">
+          <div class="dropup">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
               <i class="bi bi-three-dots-vertical"></i>
             </button>
@@ -1549,6 +1622,185 @@
       confirmDeleteBtn.addEventListener("click", confirmDeleteExpense);
     }
   });
+
+  // Load categories data
+  function loadCategories() {
+    if (currentExpenses.length === 0) {
+      loadExpenses().then(() => {
+        displayCategoriesData();
+      });
+    } else {
+      displayCategoriesData();
+    }
+  }
+
+  // Display categories data
+  function displayCategoriesData() {
+    const categories = calculateCategoryData();
+    updateCategoryStats(categories);
+    displayCategoryList(categories);
+    displayCategoryChart(categories);
+  }
+
+  // Calculate category data from expenses
+  function calculateCategoryData() {
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    const monthlyExpenses = currentExpenses.filter(e => e.date.startsWith(thisMonth));
+    
+    const categoryData = {};
+    const defaultCategories = ['Food', 'Transportation', 'Entertainment', 'Utilities', 'Healthcare', 'Shopping', 'Other'];
+    
+    // Initialize all categories
+    defaultCategories.forEach(cat => {
+      categoryData[cat] = {
+        name: cat,
+        total: 0,
+        count: 0,
+        percentage: 0,
+        icon: getCategoryIcon(cat),
+        color: getCategoryColor(cat)
+      };
+    });
+
+    // Calculate totals
+    const totalMonthlySpent = monthlyExpenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+    
+    monthlyExpenses.forEach(expense => {
+      const category = expense.category || 'Other';
+      if (categoryData[category]) {
+        categoryData[category].total += parseFloat(expense.amount || 0);
+        categoryData[category].count += 1;
+      }
+    });
+
+    // Calculate percentages
+    Object.keys(categoryData).forEach(cat => {
+      if (totalMonthlySpent > 0) {
+        categoryData[cat].percentage = (categoryData[cat].total / totalMonthlySpent) * 100;
+      }
+    });
+
+    return categoryData;
+  }
+
+  // Update category statistics
+  function updateCategoryStats(categories) {
+    const categoriesWithExpenses = Object.values(categories).filter(cat => cat.total > 0);
+    const totalCategories = categoriesWithExpenses.length;
+    
+    // Find most used category (based on highest spending amount)
+    const mostUsed = Object.values(categories).reduce((max, cat) => 
+      cat.total > max.total ? cat : max, { total: 0, name: 'None' });
+    
+    // Find category with highest percentage
+    const highestPercentage = Object.values(categories).reduce((max, cat) => 
+      cat.percentage > max.percentage ? cat : max, { percentage: 0, name: 'None' });
+    
+    // Calculate total monthly spending
+    const totalMonthly = Object.values(categories).reduce((sum, cat) => sum + cat.total, 0);
+
+    document.getElementById('total-categories').textContent = totalCategories;
+    document.getElementById('most-used-category').textContent = mostUsed.name;
+    document.getElementById('highest-percentage-category').textContent = 
+      `${highestPercentage.name} (${highestPercentage.percentage.toFixed(1)}%)`;
+    document.getElementById('category-expenses').textContent = `$${totalMonthly.toFixed(2)}`;
+  }
+
+  // Display category list
+  function displayCategoryList(categories) {
+    const container = document.getElementById('category-list');
+    const sortedCategories = Object.values(categories)
+      .filter(cat => cat.total > 0)
+      .sort((a, b) => b.total - a.total);
+
+    if (sortedCategories.length === 0) {
+      container.innerHTML = `
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-tags fs-1 mb-3 d-block"></i>
+          <p>No expenses recorded this month</p>
+          <small>Add some expenses to see category breakdown</small>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    sortedCategories.forEach((category, index) => {
+      html += `
+        <div class="category-item mb-3 fade-in" style="animation-delay: ${index * 0.1}s">
+          <div class="d-flex align-items-center justify-content-between p-3 border rounded">
+            <div class="d-flex align-items-center">
+              <div class="category-icon me-3" style="background: ${category.color}">
+                <i class="bi ${category.icon} text-white"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">${category.name}</h6>
+                <small class="text-muted">${category.count} transaction${category.count !== 1 ? 's' : ''}</small>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold fs-5 text-primary">$${category.total.toFixed(2)}</div>
+              <small class="text-muted">${category.percentage.toFixed(1)}%</small>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // Display category chart (simple bar chart)
+  function displayCategoryChart(categories) {
+    const container = document.getElementById('category-chart');
+    const sortedCategories = Object.values(categories)
+      .filter(cat => cat.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5); // Top 5 categories
+
+    if (sortedCategories.length === 0) {
+      container.innerHTML = `
+        <div class="text-center text-muted py-4">
+          <p>No data to display</p>
+        </div>
+      `;
+      return;
+    }
+
+    const maxAmount = Math.max(...sortedCategories.map(cat => cat.total));
+    
+    let html = '';
+    sortedCategories.forEach((category, index) => {
+      const width = maxAmount > 0 ? (category.total / maxAmount) * 100 : 0;
+      html += `
+        <div class="chart-item mb-3 fade-in" style="animation-delay: ${index * 0.1}s">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="fw-semibold">${category.name}</span>
+            <span class="text-primary fw-bold">$${category.total.toFixed(2)}</span>
+          </div>
+          <div class="progress" style="height: 12px;">
+            <div class="progress-bar" style="width: ${width}%; background: ${category.color}"></div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // Get category color
+  function getCategoryColor(category) {
+    const colors = {
+      'Food': '#FF6B6B',
+      'Transportation': '#4ECDC4',
+      'Entertainment': '#45B7D1',
+      'Utilities': '#FFA07A',
+      'Healthcare': '#98D8C8',
+      'Shopping': '#F7DC6F',
+      'Other': '#BB8FCE'
+    };
+    return colors[category] || '#6C757D';
+  }
 
   // Initialize dashboard
   checkAuth();

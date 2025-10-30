@@ -10,10 +10,24 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
     />
     <link rel="stylesheet" href="/assets/css/dashboard.css" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon_io/favicon-16x16.png">
-<link rel="manifest" href="/assets/favicon_io/site.webmanifest">
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/assets/favicon_io/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/assets/favicon_io/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/assets/favicon_io/favicon-16x16.png"
+    />
+    <link rel="manifest" href="/assets/favicon_io/site.webmanifest" />
   </head>
 
   <body>
@@ -53,11 +67,11 @@
         </ul>
       </nav>
 
-      <div class="sidebar-footer">
+      <div class="sidebar-footer mb-4">
         <div class="user-info">
           <span id="user-name-sidebar">Welcome!</span>
           <button class="btn btn-outline-light btn-sm" id="logout-btn">
-            <i class="bi bi-box-arrow-right"></i>
+            <i class="bi bi-box-arrow-right mt-2"></i> Log out
           </button>
         </div>
       </div>
@@ -257,8 +271,8 @@
                 </div>
                 <div
                   class="card-body"
-                  style="max-height: 400px; overflow-y: auto"
-                >
+                  style="max-height: 400px; overflow-y: auto">
+                  
                   <div id="expense-list-container">
                     <div class="loading-spinner" id="loading-expenses">
                       <div class="spinner-border text-primary" role="status">
@@ -484,18 +498,60 @@
                   </h6>
                 </div>
                 <div class="card-body">
-                  <div class="coming-soon text-center py-5">
-                    <i class="bi bi-tools fs-1 text-muted mb-3 d-block"></i>
-                    <h4 class="text-muted">Coming Soon</h4>
-                    <p class="text-muted">
-                      Category management features are under development.
-                    </p>
-                    <button
-                      class="btn btn-primary"
-                      onclick="navigateToSection('dashboard', true)"
-                    >
-                      <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
-                    </button>
+                  <div class="row">
+                    <!-- Category Statistics -->
+                    <div class="col-lg-3 col-md-6 mb-4">
+                      <div class="card bg-light">
+                        <div class="card-body text-center">
+                          <h3 class="text-primary mb-1" id="total-categories">7</h3>
+                          <p class="text-muted mb-0">Total Categories</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-4">
+                      <div class="card bg-light">
+                        <div class="card-body text-center">
+                          <h3 class="text-success mb-1" id="most-used-category">Food</h3>
+                          <p class="text-muted mb-0">Most Used</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-4">
+                      <div class="card bg-light">
+                        <div class="card-body text-center">
+                          <h3 class="text-info mb-0" id="highest-percentage-category">Food</h3>
+                          <p class="text-muted mb-0">Highest %</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-4">
+                      <div class="card bg-light">
+                        <div class="card-body text-center">
+                          <h3 class="text-warning mb-1" id="category-expenses">$0.00</h3>
+                          <p class="text-muted mb-0">This Month</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Category List -->
+                  <div class="row">
+                    <div class="col-12">
+                      <h6 class="mb-3">Category Breakdown</h6>
+                      <div id="category-list">
+                        <!-- Categories will be populated here -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Category Usage Chart -->
+                  <div class="row mt-4">
+                    <div class="col-12">
+                      <h6 class="mb-3">Category Usage This Month</h6>
+                      <div id="category-chart">
+                        <!-- Chart will be populated here -->
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
