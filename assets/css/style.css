@@ -1,0 +1,37 @@
+body{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+
+.form-control:focus,
+.form-select:focus,
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+
+.form-control:focus {
+    border-color: #ced4da;
+    box-shadow: none;
+}
+
+.form-select:focus {
+    border-color: #ced4da;
+    box-shadow: none;
+}
+
+
+.btn:focus,
+.btn:active:focus,
+.btn.active:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
