@@ -1,5 +1,5 @@
 {
-  "name": "expense-tracker",
+  "name": "fineclem-expense-tracker",
   "version": "1.0.0",
   "description": "Simple expense tracker with signup/login and SQLite backend",
   "main": "server.js",
