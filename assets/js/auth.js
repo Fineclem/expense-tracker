@@ -42,6 +42,19 @@
 
     const cardBody = document.querySelector(".card-body");
     cardBody.insertBefore(alert, cardBody.firstChild);
+
+    // Auto-dismiss error after 5 seconds
+    setTimeout(() => {
+      if (alert && alert.parentNode) {
+        alert.classList.remove('show');
+        alert.classList.add('fade');
+        setTimeout(() => {
+          if (alert.parentNode) {
+            alert.remove();
+          }
+        }, 150);
+      }
+    }, 5000);
   }
 
   // Block UI functionality
@@ -105,15 +118,70 @@
 
   // Show success message
   function showSuccess(message) {
-    const alert = document.createElement("div");
-    alert.className = "alert alert-success alert-dismissible fade show";
-    alert.innerHTML = `
-      ${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    showToast(message, 'success');
+  }
+
+  // Toast notification system
+  function showToast(message, type = 'success') {
+    // Remove existing toast
+    const existingToast = document.getElementById('auth-toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.id = 'auth-toast';
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = `
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      min-width: 350px;
+      max-width: 400px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border: none;
+      border-radius: 12px;
+      animation: slideInRight 0.4s ease-out;
     `;
 
-    const cardBody = document.querySelector(".card-body");
-    cardBody.insertBefore(alert, cardBody.firstChild);
+    const iconMap = {
+      'success': 'bi-check-circle-fill',
+      'error': 'bi-exclamation-triangle-fill',
+      'info': 'bi-info-circle-fill'
+    };
+
+    toast.innerHTML = `
+      <div class="d-flex align-items-center">
+        <i class="bi ${iconMap[type]} me-3 fs-5"></i>
+        <div class="flex-grow-1 fw-semibold">${message}</div>
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="alert"></button>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.style.animation = 'slideOutRight 0.4s ease-in';
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 400);
+      }
+    }, 4000);
+
+    // Handle manual close
+    const closeBtn = toast.querySelector('.btn-close');
+    closeBtn.addEventListener('click', () => {
+      toast.style.animation = 'slideOutRight 0.4s ease-in';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.remove();
+        }
+      }, 400);
+    });
   }
 
   // Password validation

@@ -728,4 +728,112 @@ tegory Management Styles */
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
+}/*
+ Enhanced Input Focus Styles */
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Input Group Focus Enhancement */
+.input-group:focus-within {
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15);
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+}
+
+.input-group:focus-within .input-group-text {
+    border-color: #667eea;
+    background-color: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    transition: all 0.2s ease-in-out;
+}
+
+.input-group:focus-within .form-control {
+    border-color: #667eea;
+    box-shadow: none;
+}
+
+/* Subtle Hover Effects */
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: #b8c5f2;
+    transition: border-color 0.2s ease-in-out;
+}
+
+/* Remove Default Bootstrap Focus Ring */
+.form-control:focus,
+.form-select:focus,
+.btn:focus {
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+}
+
+/* Custom Focus for Different Input Types */
+input[type="date"]:focus,
+input[type="number"]:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+    outline: none;
+}
+
+/* Enhanced Input Group Styling */
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Smooth Transitions for All Form Elements */
+.form-control,
+.form-select,
+.input-group-text {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Focus States for Buttons */
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25) !important;
+}
+
+.btn-success:focus {
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25) !important;
+}
+
+.btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+}
+/* Cur
+rent Date Display */
+.current-date-display {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    background-color: rgba(102, 126, 234, 0.1);
+    border-radius: 20px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.current-date-display i {
+    font-size: 0.85rem;
+}
+
+.current-date-display span {
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+}
+
+@media (max-width: 768px) {
+    .current-date-display {
+        display: none;
+    }
 }

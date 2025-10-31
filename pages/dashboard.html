@@ -84,6 +84,12 @@
           <i class="bi bi-list"></i>
         </button>
         <h5 class="page-title mb-0" id="page-title">Dashboard</h5>
+        <div class="ms-auto d-flex align-items-center">
+          <div class="current-date-display">
+            <i class="bi bi-calendar3 me-2 text-muted"></i>
+            <span id="current-date" class="text-muted fw-medium"></span>
+          </div>
+        </div>
       </nav>
       <!-- Content Area -->
       <div class="content-area" id="content-area">
@@ -97,7 +103,7 @@
                   <div class="stats-icon primary mx-auto">
                     <i class="bi bi-cash-stack"></i>
                   </div>
-                  <h3 class="mb-1" id="total-spent">$0.00</h3>
+                  <h3 class="mb-1" id="total-spent">₦0.00</h3>
                   <p class="text-muted mb-0">Total Spent</p>
                   <small class="text-success" id="total-change"
                     >This Month</small
@@ -111,7 +117,7 @@
                   <div class="stats-icon success mx-auto" id="daily-icon">
                     <i class="bi bi-calendar-day"></i>
                   </div>
-                  <h3 class="mb-1" id="today-spent">$0.00</h3>
+                  <h3 class="mb-1" id="today-spent">₦0.00</h3>
                   <p class="text-muted mb-0">Today's Expenses</p>
                   <small class="text-info" id="today-count"
                     >0 transactions</small
@@ -125,7 +131,7 @@
                   <div class="stats-icon warning mx-auto">
                     <i class="bi bi-graph-up"></i>
                   </div>
-                  <h3 class="mb-1" id="avg-daily">$0.00</h3>
+                  <h3 class="mb-1" id="avg-daily">₦0.00</h3>
                   <p class="text-muted mb-0">Daily Average</p>
                   <small class="text-warning" id="avg-change"
                     >Last 7 days</small
@@ -142,7 +148,7 @@
                   <h3 class="mb-1" id="top-category">Food</h3>
                   <p class="text-muted mb-0">Top Category</p>
                   <small class="text-primary" id="top-category-amount"
-                    >$0.00</small
+                    >₦0.00</small
                   >
                 </div>
               </div>
@@ -208,7 +214,7 @@
                     <div class="col-12">
                       <label class="form-label fw-semibold">Amount</label>
                       <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">₦</span>
                         <input
                           type="number"
                           step="0.01"
@@ -271,8 +277,8 @@
                 </div>
                 <div
                   class="card-body"
-                  style="max-height: 400px; overflow-y: auto">
-                  
+                  style="max-height: 400px; overflow-y: auto"
+                >
                   <div id="expense-list-container">
                     <div class="loading-spinner" id="loading-expenses">
                       <div class="spinner-border text-primary" role="status">
@@ -306,7 +312,7 @@
                           >Monthly Budget</label
                         >
                         <div class="input-group">
-                          <span class="input-group-text">$</span>
+                          <span class="input-group-text">₦</span>
                           <input
                             type="number"
                             step="0.01"
@@ -323,7 +329,7 @@
                           >Weekly Budget</label
                         >
                         <div class="input-group">
-                          <span class="input-group-text">$</span>
+                          <span class="input-group-text">₦</span>
                           <input
                             type="number"
                             step="0.01"
@@ -340,7 +346,7 @@
                           >Daily Budget</label
                         >
                         <div class="input-group">
-                          <span class="input-group-text">$</span>
+                          <span class="input-group-text">₦</span>
                           <input
                             type="number"
                             step="0.01"
@@ -378,7 +384,7 @@
                         class="d-flex justify-content-between align-items-center mb-1"
                       >
                         <span class="text-muted">Daily Budget</span>
-                        <span class="fw-bold" id="daily-budget">$35.00</span>
+                        <span class="fw-bold" id="daily-budget">₦35.00</span>
                       </div>
                       <div class="progress" style="height: 8px">
                         <div
@@ -393,7 +399,7 @@
                         class="d-flex justify-content-between align-items-center mb-1"
                       >
                         <span class="text-muted">Weekly Budget</span>
-                        <span class="fw-bold" id="weekly-budget">$250.00</span>
+                        <span class="fw-bold" id="weekly-budget">₦250.00</span>
                       </div>
                       <div class="progress" style="height: 8px">
                         <div
@@ -409,7 +415,7 @@
                       >
                         <span class="text-muted">Monthly Budget</span>
                         <span class="fw-bold" id="monthly-budget"
-                          >$1,000.00</span
+                          >₦1,000.00</span
                         >
                       </div>
                       <div class="progress" style="height: 8px">
@@ -426,7 +432,7 @@
                       >
                         <span class="text-muted">Monthly Remaining</span>
                         <span class="fw-bold text-success" id="budget-remaining"
-                          >$1,000.00</span
+                          >₦1,000.00</span
                         >
                       </div>
                     </div>
@@ -474,6 +480,16 @@
                         </button>
                       </div>
                     </div>
+                    <div class="col-md-6 text-end">
+                      <button
+                        type="button"
+                        class="btn btn-success"
+                        id="download-report-btn"
+                        onclick="downloadReport()"
+                      >
+                        <i class="bi bi-download me-2"></i>Download Report
+                      </button>
+                    </div>
                   </div>
                   <div id="report-output">
                     <div class="text-center text-muted py-4">
@@ -503,7 +519,9 @@
                     <div class="col-lg-3 col-md-6 mb-4">
                       <div class="card bg-light">
                         <div class="card-body text-center">
-                          <h3 class="text-primary mb-1" id="total-categories">7</h3>
+                          <h3 class="text-primary mb-1" id="total-categories">
+                            7
+                          </h3>
                           <p class="text-muted mb-0">Total Categories</p>
                         </div>
                       </div>
@@ -511,7 +529,9 @@
                     <div class="col-lg-3 col-md-6 mb-4">
                       <div class="card bg-light">
                         <div class="card-body text-center">
-                          <h3 class="text-success mb-1" id="most-used-category">Food</h3>
+                          <h3 class="text-success mb-1" id="most-used-category">
+                            Food
+                          </h3>
                           <p class="text-muted mb-0">Most Used</p>
                         </div>
                       </div>
@@ -519,7 +539,12 @@
                     <div class="col-lg-3 col-md-6 mb-4">
                       <div class="card bg-light">
                         <div class="card-body text-center">
-                          <h3 class="text-info mb-0" id="highest-percentage-category">Food</h3>
+                          <h3
+                            class="text-info mb-0"
+                            id="highest-percentage-category"
+                          >
+                            Food
+                          </h3>
                           <p class="text-muted mb-0">Highest %</p>
                         </div>
                       </div>
@@ -527,7 +552,9 @@
                     <div class="col-lg-3 col-md-6 mb-4">
                       <div class="card bg-light">
                         <div class="card-body text-center">
-                          <h3 class="text-warning mb-1" id="category-expenses">$0.00</h3>
+                          <h3 class="text-warning mb-1" id="category-expenses">
+                            ₦0.00
+                          </h3>
                           <p class="text-muted mb-0">This Month</p>
                         </div>
                       </div>
@@ -586,7 +613,7 @@
                 <div class="col-md-6">
                   <label class="form-label fw-semibold">Amount</label>
                   <div class="input-group">
-                    <span class="input-group-text">$</span>
+                    <span class="input-group-text">₦</span>
                     <input
                       type="number"
                       step="0.01"
@@ -700,6 +727,8 @@
 
     <!-- Bootstrap JS -->
     <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="/assets/js/app.js"></script>
   </body>
 </html>

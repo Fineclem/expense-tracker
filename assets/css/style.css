@@ -34,4 +34,103 @@ button:focus {
 .btn.active:focus {
     outline: none !important;
     box-shadow: none !important;
+}/* Toast
+ Animations for Auth Pages */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Enhanced toast styling */
+#auth-toast {
+    backdrop-filter: blur(10px);
+    border-left: 4px solid currentColor;
+}
+
+#auth-toast.alert-success {
+    background: rgba(25, 135, 84, 0.95);
+    color: white;
+    border-left-color: #198754;
+}
+
+#auth-toast.alert-danger {
+    background: rgba(220, 53, 69, 0.95);
+    color: white;
+    border-left-color: #dc3545;
+}
+
+#auth-toast.alert-info {
+    background: rgba(13, 202, 240, 0.95);
+    color: white;
+    border-left-color: #0dcaf0;
+}
+
+/* Error alert timeout fade effect */
+.alert-danger.fade {
+    transition: opacity 0.15s linear;
+}/* Enhance
+d Input Focus Styles for Auth Pages */
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+    outline: none;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Subtle Hover Effects */
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: #b8c5f2;
+    transition: border-color 0.2s ease-in-out;
+}
+
+/* Custom Focus for Different Input Types */
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="text"]:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+    outline: none;
+}
+
+/* Smooth Transitions for All Form Elements */
+.form-control,
+.form-select {
+    transition: all 0.2s ease-in-out;
+    border-radius: 8px;
+}
+
+/* Enhanced Button Focus */
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25) !important;
+}
+
+.btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15) !important;
+}
+
+/* Remove Default Outline */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
 }

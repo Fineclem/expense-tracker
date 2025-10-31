@@ -34,24 +34,24 @@
 
   function handleLogout(e) {
     e.preventDefault();
-    
+
     // Show logout confirmation and loading state
-    const logoutBtn = e.target.closest('#logout-btn');
+    const logoutBtn = e.target.closest("#logout-btn");
     const originalContent = logoutBtn.innerHTML;
-    
+
     // Update button to show loading
     logoutBtn.disabled = true;
     logoutBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-    logoutBtn.title = 'Logging out...';
-    
+    logoutBtn.title = "Logging out...";
+
     // Show logout toast
-    showLogoutToast('Logging out...', 'info');
-    
+    showLogoutToast("Logging out...", "info");
+
     // Simulate logout process (remove token and redirect)
     setTimeout(() => {
       localStorage.removeItem("token");
-      showLogoutToast('Logged out successfully!', 'success');
-      
+      showLogoutToast("Logged out successfully!", "success");
+
       // Redirect after a brief delay
       setTimeout(() => {
         window.location.href = "/login";
@@ -60,15 +60,15 @@
   }
 
   // Logout toast function
-  function showLogoutToast(message, type = 'info') {
+  function showLogoutToast(message, type = "info") {
     // Remove existing logout toast
-    const existingToast = document.getElementById('logout-toast');
+    const existingToast = document.getElementById("logout-toast");
     if (existingToast) {
       existingToast.remove();
     }
 
-    const toast = document.createElement('div');
-    toast.id = 'logout-toast';
+    const toast = document.createElement("div");
+    toast.id = "logout-toast";
     toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     toast.style.cssText = `
       top: 20px;
@@ -81,9 +81,9 @@
     `;
 
     const iconMap = {
-      'info': 'bi-info-circle',
-      'success': 'bi-check-circle',
-      'warning': 'bi-exclamation-triangle'
+      info: "bi-info-circle",
+      success: "bi-check-circle",
+      warning: "bi-exclamation-triangle",
     };
 
     toast.innerHTML = `
@@ -97,10 +97,10 @@
     document.body.appendChild(toast);
 
     // Auto remove after delay
-    if (type === 'info') {
+    if (type === "info") {
       setTimeout(() => {
         if (toast.parentNode) {
-          toast.style.animation = 'slideOutRight 0.3s ease-in';
+          toast.style.animation = "slideOutRight 0.3s ease-in";
           setTimeout(() => {
             if (toast.parentNode) {
               toast.remove();
@@ -130,6 +130,7 @@
         updateUserInfo(data.user.name);
         loadDashboardData();
         setCurrentDate();
+        displayCurrentDate();
         updateDailyIcon();
         initializeEventListeners();
       })
@@ -148,6 +149,22 @@
     if (dateInput && !dateInput.value) {
       const today = new Date().toISOString().split("T")[0];
       dateInput.value = today;
+    }
+  }
+
+  // Display current date in the dashboard header
+  function displayCurrentDate() {
+    const currentDateElement = document.getElementById("current-date");
+    if (currentDateElement) {
+      const today = new Date();
+      const options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      };
+      const formattedDate = today.toLocaleDateString("en-US", options);
+      currentDateElement.textContent = formattedDate;
     }
   }
 
@@ -344,7 +361,6 @@
         loadDashboardData();
         break;
       case "expenses":
-        
         setTimeout(() => {
           const amountInput = document.querySelector(
             '#expenses-section input[name="amount"]'
@@ -355,11 +371,9 @@
         }, 100);
         break;
       case "budget":
-        
         loadBudget();
         break;
       case "reports":
-        
         if (document.getElementById("reports-section")) {
           loadReports();
         } else {
@@ -462,7 +476,7 @@
     document.getElementById("loading-expenses").style.display = "none";
   }
 
-  // Load expenses 
+  // Load expenses
   function loadExpenses() {
     return api("/expenses/list")
       .then((rows) => {
@@ -504,7 +518,6 @@
       });
   }
 
-  
   function createExpenseElement(expense, index) {
     const div = document.createElement("div");
     div.className = "expense-item fade-in";
@@ -538,7 +551,7 @@
         </div>
         <div class="text-end d-flex align-items-center">
           <div class="me-3">
-            <div class="fw-bold fs-5 text-primary">$${parseFloat(
+            <div class="fw-bold fs-5 text-primary">₦${parseFloat(
               expense.amount
             ).toFixed(2)}</div>
             <div class="text-muted small">${
@@ -604,7 +617,7 @@
                 <div class="text-muted small">${expense.note || "No note"}</div>
               </div>
               <div class="text-end">
-                <div class="fw-bold text-primary">$${parseFloat(
+                <div class="fw-bold text-primary">₦${parseFloat(
                   expense.amount
                 ).toFixed(2)}</div>
                 <div class="text-muted small">${timeAgo}</div>
@@ -692,6 +705,8 @@
   function loadReports() {
     return api(`/reports?period=${currentPeriod}`)
       .then((rows) => {
+        // Store data for PDF generation
+        window.currentReportData = rows || [];
         const output = document.getElementById("report-output");
 
         if (!rows || rows.length === 0) {
@@ -723,7 +738,7 @@
             }s">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="fw-semibold">${periodLabel}</span>
-                <span class="fw-bold text-primary">$${amount.toFixed(2)}</span>
+                <span class="fw-bold text-primary">₦${amount.toFixed(2)}</span>
               </div>
               <div class="progress" style="height: 8px;">
                 <div class="progress-bar bg-gradient" style="width: ${percentage}%; background: var(--primary-gradient);"></div>
@@ -849,9 +864,9 @@
 
   // Update stats cards with animation
   function updateStatsCards(stats) {
-    animateValue("total-spent", stats.totalSpent, "$");
-    animateValue("today-spent", stats.todaySpent, "$");
-    animateValue("avg-daily", stats.avgDaily, "$");
+    animateValue("total-spent", stats.totalSpent, "₦");
+    animateValue("today-spent", stats.todaySpent, "₦");
+    animateValue("avg-daily", stats.avgDaily, "₦");
 
     document.getElementById(
       "today-count"
@@ -859,7 +874,7 @@
     document.getElementById("top-category").textContent = stats.topCategory;
     document.getElementById(
       "top-category-amount"
-    ).textContent = `$${stats.topCategoryAmount.toFixed(2)}`;
+    ).textContent = `₦${stats.topCategoryAmount.toFixed(2)}`;
   }
 
   // Animate number values
@@ -1142,13 +1157,15 @@
   function updateBudgetDisplay() {
     document.getElementById(
       "daily-budget"
-    ).textContent = `$${userBudget.daily_budget.toFixed(2)}`;
+    ).textContent = `₦${userBudget.daily_budget.toFixed(2)}`;
     document.getElementById(
       "weekly-budget"
-    ).textContent = `$${userBudget.weekly_budget.toFixed(2)}`;
+    ).textContent = `₦${userBudget.weekly_budget.toFixed(2)}`;
     document.getElementById(
       "monthly-budget"
-    ).textContent = `$${userBudget.monthly_budget.toFixed(2)}`;
+    ).textContent = `₦${userBudget.monthly_budget.toFixed(2)}`;
+
+    // Monthly Remaining will be calculated by updateBudgetProgress()
 
     // Also update the form inputs
     const monthlyInput = document.querySelector('input[name="monthly_budget"]');
@@ -1162,7 +1179,17 @@
 
   // Update budget progress bars
   function updateBudgetProgress() {
-    if (currentExpenses.length === 0) return;
+    if (currentExpenses.length === 0) {
+      // If no expenses, remaining = full budget
+      const remainingElement = document.getElementById("budget-remaining");
+      if (remainingElement) {
+        remainingElement.className = "fw-bold text-success";
+        remainingElement.innerHTML = `<i class="bi bi-check-circle me-1"></i>₦${userBudget.monthly_budget.toFixed(
+          2
+        )}`;
+      }
+      return;
+    }
 
     const today = new Date().toISOString().split("T")[0];
     const thisMonth = new Date().toISOString().slice(0, 7);
@@ -1209,27 +1236,27 @@
     const remainingElement = document.getElementById("budget-remaining");
     const monthlyPercentage = (monthSpent / userBudget.monthly_budget) * 100;
 
-    remainingElement.textContent = `$${Math.abs(monthlyRemaining).toFixed(2)}`;
+    remainingElement.textContent = `₦${Math.abs(monthlyRemaining).toFixed(2)}`;
 
     // Enhanced color coding for remaining budget
     if (monthlyRemaining < 0) {
       remainingElement.className = "fw-bold text-danger";
-      remainingElement.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>-$${Math.abs(
+      remainingElement.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>-₦${Math.abs(
         monthlyRemaining
       ).toFixed(2)}`;
     } else if (monthlyPercentage >= 90) {
       remainingElement.className = "fw-bold text-warning";
-      remainingElement.innerHTML = `<i class="bi bi-exclamation-circle me-1"></i>$${monthlyRemaining.toFixed(
+      remainingElement.innerHTML = `<i class="bi bi-exclamation-circle me-1"></i>₦${monthlyRemaining.toFixed(
         2
       )}`;
     } else if (monthlyPercentage >= 75) {
       remainingElement.className = "fw-bold text-info";
-      remainingElement.innerHTML = `<i class="bi bi-info-circle me-1"></i>$${monthlyRemaining.toFixed(
+      remainingElement.innerHTML = `<i class="bi bi-info-circle me-1"></i>₦${monthlyRemaining.toFixed(
         2
       )}`;
     } else {
       remainingElement.className = "fw-bold text-success";
-      remainingElement.innerHTML = `<i class="bi bi-check-circle me-1"></i>$${monthlyRemaining.toFixed(
+      remainingElement.innerHTML = `<i class="bi bi-check-circle me-1"></i>₦${monthlyRemaining.toFixed(
         2
       )}`;
     }
@@ -1314,12 +1341,12 @@
       if (!exceededElement) {
         const exceededDiv = document.createElement("div");
         exceededDiv.className = "exceeded-amount text-danger small mt-1";
-        exceededDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>Over by $${exceededAmount.toFixed(
+        exceededDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>Over by ₦${exceededAmount.toFixed(
           2
         )}`;
         parentContainer?.appendChild(exceededDiv);
       } else {
-        exceededElement.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>Over by $${exceededAmount.toFixed(
+        exceededElement.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>Over by ₦${exceededAmount.toFixed(
           2
         )}`;
       }
@@ -1348,6 +1375,32 @@
   };
 
   // Save budget settings
+  // Auto-calculate weekly and daily budgets when monthly budget changes
+  function setupBudgetAutoCalculation() {
+    const monthlyInput = document.querySelector('input[name="monthly_budget"]');
+    const weeklyInput = document.querySelector('input[name="weekly_budget"]');
+    const dailyInput = document.querySelector('input[name="daily_budget"]');
+
+    if (monthlyInput && weeklyInput && dailyInput) {
+      monthlyInput.addEventListener("input", function () {
+        const monthlyAmount = parseFloat(this.value) || 0;
+        if (monthlyAmount > 0) {
+          // Calculate weekly budget (monthly ÷ 4.33 weeks per month)
+          const weeklyAmount = monthlyAmount / 4.33;
+          // Calculate daily budget (monthly ÷ 30 days per month)
+          const dailyAmount = monthlyAmount / 30;
+
+          // Update the input fields
+          weeklyInput.value = weeklyAmount.toFixed(2);
+          dailyInput.value = dailyAmount.toFixed(2);
+        } else {
+          weeklyInput.value = "";
+          dailyInput.value = "";
+        }
+      });
+    }
+  }
+
   window.saveBudgetSettings = function () {
     console.log("saveBudgetSettings called");
 
@@ -1440,15 +1493,15 @@
 
     if (todaySpent > userBudget.daily_budget) {
       showWarningToast(
-        `Daily budget exceeded! Spent: $${todaySpent.toFixed(
+        `Daily budget exceeded! Spent: ₦${todaySpent.toFixed(
           2
-        )} / Budget: $${userBudget.daily_budget.toFixed(2)}`
+        )} / Budget: ₦${userBudget.daily_budget.toFixed(2)}`
       );
     } else if (todaySpent > userBudget.daily_budget * 0.8) {
       showWarningToast(
-        `Approaching daily budget limit: $${todaySpent.toFixed(
+        `Approaching daily budget limit: ₦${todaySpent.toFixed(
           2
-        )} / $${userBudget.daily_budget.toFixed(2)}`
+        )} / ₦${userBudget.daily_budget.toFixed(2)}`
       );
     }
   }
@@ -1610,6 +1663,9 @@
 
   // Add event listeners for modal buttons
   document.addEventListener("DOMContentLoaded", function () {
+    // Setup budget auto-calculation
+    setupBudgetAutoCalculation();
+
     // Edit expense save button
     const saveEditBtn = document.getElementById("save-expense-edit");
     if (saveEditBtn) {
@@ -1645,28 +1701,41 @@
   // Calculate category data from expenses
   function calculateCategoryData() {
     const thisMonth = new Date().toISOString().slice(0, 7);
-    const monthlyExpenses = currentExpenses.filter(e => e.date.startsWith(thisMonth));
-    
+    const monthlyExpenses = currentExpenses.filter((e) =>
+      e.date.startsWith(thisMonth)
+    );
+
     const categoryData = {};
-    const defaultCategories = ['Food', 'Transportation', 'Entertainment', 'Utilities', 'Healthcare', 'Shopping', 'Other'];
-    
+    const defaultCategories = [
+      "Food",
+      "Transportation",
+      "Entertainment",
+      "Utilities",
+      "Healthcare",
+      "Shopping",
+      "Other",
+    ];
+
     // Initialize all categories
-    defaultCategories.forEach(cat => {
+    defaultCategories.forEach((cat) => {
       categoryData[cat] = {
         name: cat,
         total: 0,
         count: 0,
         percentage: 0,
         icon: getCategoryIcon(cat),
-        color: getCategoryColor(cat)
+        color: getCategoryColor(cat),
       };
     });
 
     // Calculate totals
-    const totalMonthlySpent = monthlyExpenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
-    
-    monthlyExpenses.forEach(expense => {
-      const category = expense.category || 'Other';
+    const totalMonthlySpent = monthlyExpenses.reduce(
+      (sum, e) => sum + parseFloat(e.amount || 0),
+      0
+    );
+
+    monthlyExpenses.forEach((expense) => {
+      const category = expense.category || "Other";
       if (categoryData[category]) {
         categoryData[category].total += parseFloat(expense.amount || 0);
         categoryData[category].count += 1;
@@ -1674,9 +1743,10 @@
     });
 
     // Calculate percentages
-    Object.keys(categoryData).forEach(cat => {
+    Object.keys(categoryData).forEach((cat) => {
       if (totalMonthlySpent > 0) {
-        categoryData[cat].percentage = (categoryData[cat].total / totalMonthlySpent) * 100;
+        categoryData[cat].percentage =
+          (categoryData[cat].total / totalMonthlySpent) * 100;
       }
     });
 
@@ -1685,32 +1755,48 @@
 
   // Update category statistics
   function updateCategoryStats(categories) {
-    const categoriesWithExpenses = Object.values(categories).filter(cat => cat.total > 0);
+    const categoriesWithExpenses = Object.values(categories).filter(
+      (cat) => cat.total > 0
+    );
     const totalCategories = categoriesWithExpenses.length;
-    
-    // Find most used category (based on highest spending amount)
-    const mostUsed = Object.values(categories).reduce((max, cat) => 
-      cat.total > max.total ? cat : max, { total: 0, name: 'None' });
-    
-    // Find category with highest percentage
-    const highestPercentage = Object.values(categories).reduce((max, cat) => 
-      cat.percentage > max.percentage ? cat : max, { percentage: 0, name: 'None' });
-    
-    // Calculate total monthly spending
-    const totalMonthly = Object.values(categories).reduce((sum, cat) => sum + cat.total, 0);
 
-    document.getElementById('total-categories').textContent = totalCategories;
-    document.getElementById('most-used-category').textContent = mostUsed.name;
-    document.getElementById('highest-percentage-category').textContent = 
-      `${highestPercentage.name} (${highestPercentage.percentage.toFixed(1)}%)`;
-    document.getElementById('category-expenses').textContent = `$${totalMonthly.toFixed(2)}`;
+    // Find most used category (based on transaction count, with amount as tiebreaker)
+    const mostUsed = Object.values(categories).reduce(
+      (max, cat) => {
+        if (cat.count > max.count) return cat;
+        if (cat.count === max.count && cat.total > max.total) return cat;
+        return max;
+      },
+      { count: 0, total: 0, name: "None" }
+    );
+
+    // Find category with highest percentage
+    const highestPercentage = Object.values(categories).reduce(
+      (max, cat) => (cat.percentage > max.percentage ? cat : max),
+      { percentage: 0, name: "None" }
+    );
+
+    // Calculate total monthly spending
+    const totalMonthly = Object.values(categories).reduce(
+      (sum, cat) => sum + cat.total,
+      0
+    );
+
+    document.getElementById("total-categories").textContent = totalCategories;
+    document.getElementById("most-used-category").textContent = mostUsed.name;
+    document.getElementById("highest-percentage-category").textContent = `${
+      highestPercentage.name
+    } (${highestPercentage.percentage.toFixed(1)}%)`;
+    document.getElementById(
+      "category-expenses"
+    ).textContent = `₦${totalMonthly.toFixed(2)}`;
   }
 
   // Display category list
   function displayCategoryList(categories) {
-    const container = document.getElementById('category-list');
+    const container = document.getElementById("category-list");
     const sortedCategories = Object.values(categories)
-      .filter(cat => cat.total > 0)
+      .filter((cat) => cat.total > 0)
       .sort((a, b) => b.total - a.total);
 
     if (sortedCategories.length === 0) {
@@ -1724,23 +1810,33 @@
       return;
     }
 
-    let html = '';
+    let html = "";
     sortedCategories.forEach((category, index) => {
       html += `
-        <div class="category-item mb-3 fade-in" style="animation-delay: ${index * 0.1}s">
+        <div class="category-item mb-3 fade-in" style="animation-delay: ${
+          index * 0.1
+        }s">
           <div class="d-flex align-items-center justify-content-between p-3 border rounded">
             <div class="d-flex align-items-center">
-              <div class="category-icon me-3" style="background: ${category.color}">
+              <div class="category-icon me-3" style="background: ${
+                category.color
+              }">
                 <i class="bi ${category.icon} text-white"></i>
               </div>
               <div>
                 <h6 class="mb-1">${category.name}</h6>
-                <small class="text-muted">${category.count} transaction${category.count !== 1 ? 's' : ''}</small>
+                <small class="text-muted">${category.count} transaction${
+        category.count !== 1 ? "s" : ""
+      }</small>
               </div>
             </div>
             <div class="text-end">
-              <div class="fw-bold fs-5 text-primary">$${category.total.toFixed(2)}</div>
-              <small class="text-muted">${category.percentage.toFixed(1)}%</small>
+              <div class="fw-bold fs-5 text-primary">₦${category.total.toFixed(
+                2
+              )}</div>
+              <small class="text-muted">${category.percentage.toFixed(
+                1
+              )}%</small>
             </div>
           </div>
         </div>
@@ -1752,34 +1848,44 @@
 
   // Display category chart (simple bar chart)
   function displayCategoryChart(categories) {
-    const container = document.getElementById('category-chart');
+    const container = document.getElementById("category-chart");
     const sortedCategories = Object.values(categories)
-      .filter(cat => cat.total > 0)
       .sort((a, b) => b.total - a.total)
-      .slice(0, 5); // Top 5 categories
+      .slice(0, 7); // Show all 7 categories
 
     if (sortedCategories.length === 0) {
       container.innerHTML = `
         <div class="text-center text-muted py-4">
-          <p>No data to display</p>
+          <p>No categories available</p>
         </div>
       `;
       return;
     }
 
-    const maxAmount = Math.max(...sortedCategories.map(cat => cat.total));
-    
-    let html = '';
+    const maxAmount = Math.max(...sortedCategories.map((cat) => cat.total));
+
+    let html = "";
     sortedCategories.forEach((category, index) => {
-      const width = maxAmount > 0 ? (category.total / maxAmount) * 100 : 0;
+      const width =
+        maxAmount > 0
+          ? (category.total / maxAmount) * 100
+          : category.total > 0
+          ? 10
+          : 0;
       html += `
-        <div class="chart-item mb-3 fade-in" style="animation-delay: ${index * 0.1}s">
+        <div class="chart-item mb-3 fade-in" style="animation-delay: ${
+          index * 0.1
+        }s">
           <div class="d-flex align-items-center justify-content-between mb-1">
             <span class="fw-semibold">${category.name}</span>
-            <span class="text-primary fw-bold">$${category.total.toFixed(2)}</span>
+            <span class="text-primary fw-bold">₦${category.total.toFixed(
+              2
+            )}</span>
           </div>
           <div class="progress" style="height: 12px;">
-            <div class="progress-bar" style="width: ${width}%; background: ${category.color}"></div>
+            <div class="progress-bar" style="width: ${width}%; background: ${
+        category.color
+      }"></div>
           </div>
         </div>
       `;
@@ -1791,20 +1897,341 @@
   // Get category color
   function getCategoryColor(category) {
     const colors = {
-      'Food': '#FF6B6B',
-      'Transportation': '#4ECDC4',
-      'Entertainment': '#45B7D1',
-      'Utilities': '#FFA07A',
-      'Healthcare': '#98D8C8',
-      'Shopping': '#F7DC6F',
-      'Other': '#BB8FCE'
+      Food: "#FF6B6B",
+      Transportation: "#4ECDC4",
+      Entertainment: "#45B7D1",
+      Utilities: "#FFA07A",
+      Healthcare: "#98D8C8",
+      Shopping: "#F7DC6F",
+      Other: "#BB8FCE",
     };
-    return colors[category] || '#6C757D';
+    return colors[category] || "#6C757D";
+  }
+
+  // PDF Download functionality 
+  window.downloadReport = function () {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    if (currentExpenses.length === 0) {
+      showErrorToast("No expenses available to generate statement");
+      return;
+    }
+
+    // Get user info and current date
+    const today = new Date();
+    const userName =
+      document
+        .getElementById("user-name-sidebar")
+        ?.textContent?.replace("Welcome, ", "")
+        .replace("!", "") || "User";
+
+    // Sort expenses by date (newest first for bank statement style)
+    const sortedExpenses = [...currentExpenses].sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    );
+
+    // Calculate running balance (starting from budget)
+    const monthlyBudget = userBudget.monthly_budget || 0;
+    let runningBalance = monthlyBudget;
+
+    // PDF Header - Bank Statement Style
+    doc.setFontSize(18);
+    doc.setTextColor(0, 0, 0);
+    doc.text("FINECLEM_EXPENSE TRACKER", 20, 25);
+    doc.text("EXPENSE STATEMENT", 20, 35);
+
+    // Account Info
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Account Holder: ${userName}`, 20, 50);
+    doc.text(
+      `Statement Period: ${new Date().toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      })}`,
+      20,
+      58
+    );
+    doc.text(
+      `Generated: ${today.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })} at ${today.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })}`,
+      20,
+      66
+    );
+    doc.text(`Statement Date: ${today.toLocaleDateString()}`, 140, 50);
+    doc.text(`Account Type: Expense Tracking`, 140, 58);
+
+    // Account Summary Box
+    doc.setDrawColor(200, 200, 200);
+    doc.rect(20, 75, 170, 25);
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text("ACCOUNT SUMMARY", 25, 83);
+
+    const totalExpenses = sortedExpenses.reduce(
+      (sum, exp) => sum + parseFloat(exp.amount),
+      0
+    );
+    const remainingBalance = monthlyBudget - totalExpenses;
+
+    doc.text(`Opening Balance: ₦${monthlyBudget.toFixed(2)}`, 25, 91);
+    doc.text(`Total Expenses: ₦${totalExpenses.toFixed(2)}`, 100, 91);
+    doc.text(`Closing Balance: ₦${remainingBalance.toFixed(2)}`, 25, 97);
+    doc.text(`Number of Transactions: ${sortedExpenses.length}`, 100, 97);
+
+    // Transaction Table Header
+    let yPosition = 115;
+    doc.setFontSize(9);
+    doc.setFont(undefined, "bold");
+    doc.setTextColor(0, 0, 0);
+
+    // Table headers
+    doc.text("DATE", 25, yPosition);
+    doc.text("TIME", 45, yPosition);
+    doc.text("DESCRIPTION", 65, yPosition);
+    doc.text("CATEGORY", 115, yPosition);
+    doc.text("AMOUNT", 150, yPosition);
+    doc.text("BALANCE", 175, yPosition);
+
+    // Header line
+    doc.setDrawColor(0, 0, 0);
+    doc.line(20, yPosition + 2, 190, yPosition + 2);
+    yPosition += 8;
+
+    // Transaction rows
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(8);
+
+    // Reset running balance for forward calculation
+    runningBalance = monthlyBudget;
+
+    sortedExpenses.forEach((expense, index) => {
+      if (yPosition > 270) {
+        // New page
+        doc.addPage();
+        yPosition = 30;
+
+        // Repeat headers on new page
+        doc.setFont(undefined, "bold");
+        doc.setFontSize(9);
+        doc.text("DATE", 25, yPosition);
+        doc.text("TIME", 45, yPosition);
+        doc.text("DESCRIPTION", 65, yPosition);
+        doc.text("CATEGORY", 115, yPosition);
+        doc.text("AMOUNT", 150, yPosition);
+        doc.text("BALANCE", 175, yPosition);
+        doc.line(20, yPosition + 2, 190, yPosition + 2);
+        yPosition += 8;
+        doc.setFont(undefined, "normal");
+        doc.setFontSize(8);
+      }
+
+      // Calculate balance after this transaction
+      runningBalance -= parseFloat(expense.amount);
+
+      // Format date and time
+      const expenseDate = new Date(expense.date);
+      const formattedDate = expenseDate.toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "2-digit",
+      });
+
+      // Format time - use created_at if available, otherwise use a default time
+      let formattedTime = "12:00";
+      if (expense.created_at) {
+        const createdDate = new Date(expense.created_at);
+        formattedTime = createdDate.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+      }
+
+      // Truncate description if too long
+      const description = (expense.note || "No description").substring(0, 20);
+      const category = expense.category || "Other";
+      const amount = parseFloat(expense.amount);
+
+      // Alternate row background
+      if (index % 2 === 0) {
+        doc.setFillColor(248, 249, 250);
+        doc.rect(20, yPosition - 4, 170, 6, "F");
+      }
+
+      // Transaction data
+      doc.setTextColor(0, 0, 0);
+      doc.text(formattedDate, 25, yPosition);
+      doc.text(formattedTime, 45, yPosition);
+      doc.text(description, 65, yPosition);
+      doc.text(category, 115, yPosition);
+
+      // Amount in red (debit)
+      doc.setTextColor(220, 53, 69);
+      doc.text(`-₦${amount.toFixed(2)}`, 150, yPosition);
+
+      // Balance
+      if (runningBalance >= 0) {
+        doc.setTextColor(40, 167, 69); // Green for positive balance
+      } else {
+        doc.setTextColor(220, 53, 69); // Red for negative balance
+      }
+      doc.text(`₦${runningBalance.toFixed(2)}`, 175, yPosition);
+
+      yPosition += 6;
+    });
+
+    // Footer section
+    yPosition += 10;
+    if (yPosition > 250) {
+      doc.addPage();
+      yPosition = 30;
+    }
+
+    // Summary footer
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, yPosition, 190, yPosition);
+    yPosition += 8;
+
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, "bold");
+    doc.text("STATEMENT SUMMARY", 25, yPosition);
+    yPosition += 8;
+
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(8);
+    doc.text(`Total Debits: ₦${totalExpenses.toFixed(2)}`, 25, yPosition);
+    doc.text(
+      `Account Balance: ₦${remainingBalance.toFixed(2)}`,
+      25,
+      yPosition + 6
+    );
+
+    if (remainingBalance < 0) {
+      doc.setTextColor(220, 53, 69);
+      doc.text("⚠ Account is over budget", 25, yPosition + 12);
+    } else if (remainingBalance < monthlyBudget * 0.1) {
+      doc.setTextColor(255, 193, 7);
+      doc.text("⚠ Low balance warning", 25, yPosition + 12);
+    }
+
+    // Page numbers
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(108, 117, 125);
+      doc.text(`Page ${i} of ${pageCount}`, 170, 285);
+      doc.text("Expense Tracker - Confidential", 20, 285);
+    }
+
+    // Download
+    const fileName = `expense-statement-${
+      today.toISOString().split("T")[0]
+    }.pdf`;
+    doc.save(fileName);
+
+    showSuccessToast("Bank statement downloaded successfully!");
+  };
+
+  // Save Budget Settings function
+  window.saveBudgetSettings = function () {
+    const form = document.getElementById("budget-form");
+    const fd = new FormData(form);
+
+    const monthlyBudget = parseFloat(fd.get("monthly_budget"));
+    const weeklyBudget = parseFloat(fd.get("weekly_budget"));
+    const dailyBudget = parseFloat(fd.get("daily_budget"));
+
+    if (!monthlyBudget || monthlyBudget <= 0) {
+      showErrorToast("Please enter a valid monthly budget");
+      return;
+    }
+
+    const payload = {
+      monthly_budget: monthlyBudget,
+      weekly_budget: weeklyBudget,
+      daily_budget: dailyBudget,
+    };
+
+    const saveBtn = document.querySelector(
+      '#budget-form button[type="button"]'
+    );
+    if (!saveBtn) {
+      showErrorToast("Save button not found");
+      return;
+    }
+
+    const originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+
+    api("/budget", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    })
+      .then((budget) => {
+        userBudget = budget;
+        updateBudgetDisplay();
+        updateBudgetProgress();
+        showSuccessToast("Budget settings updated successfully!");
+      })
+      .catch((err) => {
+        showErrorToast(err.error || "Failed to update budget settings");
+      })
+      .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+      });
+  };
+
+  // Auto-calculate weekly and daily budgets when monthly budget changes
+  function setupBudgetAutoCalculation() {
+    const monthlyInput = document.querySelector('input[name="monthly_budget"]');
+
+    if (monthlyInput) {
+      monthlyInput.addEventListener("input", function () {
+        const monthlyAmount = parseFloat(this.value);
+
+        if (monthlyAmount && monthlyAmount > 0) {
+          // Calculate weekly budget (monthly / 4.33 weeks per month)
+          const weeklyAmount = monthlyAmount / 4.33;
+
+          // Calculate daily budget (monthly / 30 days per month)
+          const dailyAmount = monthlyAmount / 30;
+
+          // Update the form inputs
+          const weeklyInput = document.querySelector(
+            'input[name="weekly_budget"]'
+          );
+          const dailyInput = document.querySelector(
+            'input[name="daily_budget"]'
+          );
+
+          if (weeklyInput) {
+            weeklyInput.value = weeklyAmount.toFixed(2);
+          }
+
+          if (dailyInput) {
+            dailyInput.value = dailyAmount.toFixed(2);
+          }
+        }
+      });
+    }
   }
 
   // Initialize dashboard
   checkAuth();
 
-  // Expose navigateToSection globally for HTML onclick handlers
   window.navigateToSection = navigateToSection;
 })();
