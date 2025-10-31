@@ -10,6 +10,15 @@
     return fetch("/api" + path, Object.assign({ headers }, opts)).then(
       async (res) => {
         const body = await res.json().catch(() => ({}));
+
+        // Handle token expiration
+        if (!res.ok && res.status === 401 && body.error === "Invalid token") {
+          console.log("Token expired, redirecting to login");
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+          return;
+        }
+
         if (!res.ok) throw body;
         return body;
       }
@@ -28,7 +37,7 @@
     // Update sidebar user info
     const userNameSidebar = document.getElementById("user-name-sidebar");
     if (userNameSidebar) {
-      userNameSidebar.textContent = `Welcome, ${userName}!`;
+      userNameSidebar.textContent = `Welcome, ${userName.toUpperCase()}!`;
     }
   }
 
@@ -138,6 +147,12 @@
         console.error("Authentication error:", err);
         console.error("Full error object:", err);
         localStorage.removeItem("token");
+
+        // Show user-friendly message before redirect
+        if (err.error === "Invalid token") {
+          alert("Your session has expired. Please log in again.");
+        }
+
         // Redirect to login if token is invalid
         window.location.href = "/login";
       });
@@ -1908,7 +1923,7 @@
     return colors[category] || "#6C757D";
   }
 
-  // PDF Download functionality 
+  // PDF Download functionality
   window.downloadReport = function () {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
