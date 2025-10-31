@@ -9,7 +9,7 @@ const cors = require("cors");
 
 const DB_DIR =
   process.env.NODE_ENV === "production"
-    ? "/opt/render/project/src/data"
+    ? "/opt/render/project/data"
     : path.join(__dirname, "data");
 const DB_PATH = path.join(DB_DIR, "db.sqlite");
 const JWT_SECRET =
@@ -31,7 +31,9 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
     console.error("Error opening database:", err.message);
     process.exit(1);
   }
-  console.log("Connected to SQLite database");
+  console.log("Connected to SQLite database at:", DB_PATH);
+  console.log("Database directory exists:", fs.existsSync(DB_DIR));
+  console.log("Database file exists:", fs.existsSync(DB_PATH));
 });
 
 db.configure("busyTimeout", 10000);
@@ -201,6 +203,8 @@ app.post("/api/login", (req, res) => {
     return res.status(400).json({ error: "Missing fields" });
 
   console.log("Login attempt for email:", email.toLowerCase());
+  console.log("Database path:", DB_PATH);
+  console.log("Database exists:", require("fs").existsSync(DB_PATH));
 
   db.get(
     "SELECT * FROM users WHERE email = ?",
@@ -214,6 +218,15 @@ app.post("/api/login", (req, res) => {
       }
       if (!row) {
         console.log("User not found:", email.toLowerCase());
+        console.log("DEBUG: Checking all users in database...");
+        db.all("SELECT email FROM users", [], (err2, allUsers) => {
+          if (!err2) {
+            console.log(
+              "DEBUG: All users in database:",
+              allUsers.map((u) => u.email)
+            );
+          }
+        });
         return res.status(400).json({ error: "Invalid credentials" });
       }
 
@@ -234,6 +247,76 @@ app.post("/api/login", (req, res) => {
 
 app.get("/api/me", authMiddleware, (req, res) => {
   res.json({ user: req.user });
+});
+
+// Debug endpoint to check users (remove in production)
+app.get("/api/debug/users", (req, res) => {
+  db.all("SELECT id, name, email, created_at FROM users", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ users: rows, count: rows.length, dbPath: DB_PATH });
+  });
+});
+
+// Simple health check with user count
+app.get("/api/health", (req, res) => {
+  db.get("SELECT COUNT(*) as count FROM users", [], (err, row) => {
+    if (err) {
+      return res.json({ status: "error", error: err.message });
+    }
+    res.json({
+      status: "ok",
+      userCount: row.count,
+      dbPath: DB_PATH,
+      timestamp: new Date().toISOString(),
+    });
+  });
+});
+
+// Debug endpoint to test login without UI
+app.post("/api/debug/test-login", (req, res) => {
+  const { email, password } = req.body;
+  console.log("DEBUG: Test login for:", email);
+
+  db.get(
+    "SELECT * FROM users WHERE email = ?",
+    [email.toLowerCase()],
+    (err, row) => {
+      if (err) {
+        console.log("DEBUG: Database error:", err.message);
+        return res.json({
+          success: false,
+          error: "Database error",
+          details: err.message,
+        });
+      }
+
+      if (!row) {
+        console.log("DEBUG: User not found in database");
+        return res.json({ success: false, error: "User not found" });
+      }
+
+      console.log("DEBUG: User found:", {
+        id: row.id,
+        email: row.email,
+        name: row.name,
+      });
+
+      const passwordMatch = bcrypt.compareSync(password, row.password);
+      console.log("DEBUG: Password match:", passwordMatch);
+
+      if (!passwordMatch) {
+        return res.json({ success: false, error: "Password mismatch" });
+      }
+
+      res.json({
+        success: true,
+        user: { id: row.id, email: row.email, name: row.name },
+        message: "Login would succeed",
+      });
+    }
+  );
 });
 
 app.post("/api/expenses", authMiddleware, (req, res) => {

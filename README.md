@@ -48,28 +48,33 @@ expense-tracker/
 ## Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd expense-tracker
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 4. **Start the application**
+
    ```bash
    npm start
    ```
 
    For development with auto-reload:
+
    ```bash
    npm run dev
    ```
@@ -81,29 +86,28 @@ expense-tracker/
 
 Create a `.env` file in the root directory:
 
-```env
-PORT=4001
-JWT_SECRET=your_jwt_secret_key_here_change_in_production
-```
-
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/signup` - Create new user account
 - `POST /api/login` - User login
 - `GET /api/me` - Get current user info
 
 ### Expenses
+
 - `POST /api/expenses` - Add new expense
 - `GET /api/expenses/list` - Get user's expenses
 - `PUT /api/expenses/:id` - Update expense
 - `DELETE /api/expenses/:id` - Delete expense
 
 ### Budget
+
 - `GET /api/budget` - Get user's budget settings
 - `PUT /api/budget` - Update budget settings
 
 ### Reports
+
 - `GET /api/reports?period=daily|weekly|monthly` - Get spending reports
 
 ## Database Schema

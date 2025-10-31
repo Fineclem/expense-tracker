@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: expense-tracker
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        value: fineclem_expense_tracker_secret_key_2024_production
+    disk:
+      name: expense-tracker-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
