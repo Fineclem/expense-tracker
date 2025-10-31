@@ -81,30 +81,26 @@ expense-tracker/
 
 Create a `.env` file in the root directory:
 
-```env
-PORT=4001
-JWT_SECRET=your_jwt_secret_key_here_change_in_production
-```
+
 
 ## API Endpoints
 
 ### Authentication
-- `POST /api/signup` - Create new user account
-- `POST /api/login` - User login
-- `GET /api/me` - Get current user info
+Create new user account- User login
+ Get current user info
 
 ### Expenses
-- `POST /api/expenses` - Add new expense
-- `GET /api/expenses/list` - Get user's expenses
-- `PUT /api/expenses/:id` - Update expense
-- `DELETE /api/expenses/:id` - Delete expense
+ Add new expense
+ Get user's expenses
+ Update expense
+ Delete expense
 
 ### Budget
-- `GET /api/budget` - Get user's budget settings
-- `PUT /api/budget` - Update budget settings
+ Get user's budget settings
+ Update budget settings
 
 ### Reports
-- `GET /api/reports?period=daily|weekly|monthly` - Get spending reports
+- Get spending reports
 
 ## Database Schema
 
