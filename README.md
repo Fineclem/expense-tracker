@@ -86,6 +86,7 @@ expense-tracker/
 
 Create a `.env` file in the root directory:
 
+<<<<<<< HEAD
 ## API Endpoints
 
 ### Authentication
@@ -109,6 +110,28 @@ Create a `.env` file in the root directory:
 ### Reports
 
 - `GET /api/reports?period=daily|weekly|monthly` - Get spending reports
+=======
+
+
+## API Endpoints
+
+### Authentication
+Create new user account- User login
+ Get current user info
+
+### Expenses
+ Add new expense
+ Get user's expenses
+ Update expense
+ Delete expense
+
+### Budget
+ Get user's budget settings
+ Update budget settings
+
+### Reports
+- Get spending reports
+>>>>>>> c63d70cd4d0b0667f634759b7fdefbb2ba7c4aea
 
 ## Database Schema
 
