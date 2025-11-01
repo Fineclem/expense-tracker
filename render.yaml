@@ -4,15 +4,9 @@ services:
     env: node
     plan: free
     buildCommand: npm install
-    startCommand: node server-postgres.js
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
         value: fineclem_expense_tracker_secret_key_2024_production
-
-databases:
-  - name: expense-tracker-db
-    databaseName: fineclem_expense_tracker
-    user: expense_user
-    plan: free
