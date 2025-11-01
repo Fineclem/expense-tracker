@@ -4,7 +4,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const { db, initializeDatabase } = require('./database');
+const { db, initializeDatabase } = require('./database-postgres');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fineclem_expense_tracker_secret_key_2024_production';
 
@@ -114,7 +114,7 @@ app.post('/api/signup', async (req, res) => {
     const hashed = bcrypt.hashSync(password, 10);
     
     const userId = await db.insert(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3)',
       [name, email.toLowerCase(), hashed]
     );
 
@@ -125,7 +125,7 @@ app.post('/api/signup', async (req, res) => {
     
   } catch (err) {
     console.error('Database error during signup:', err.message);
-    if (err.code === 'ER_DUP_ENTRY') {
+    if (err.code === '23505') { // PostgreSQL unique violation
       return res.status(400).json({ error: 'Email already in use' });
     }
     return res.status(500).json({ error: 'Database connection error. Please try again.' });
@@ -141,7 +141,7 @@ app.post('/api/login', async (req, res) => {
 
     console.log('Login attempt for email:', email.toLowerCase());
 
-    const row = await db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase()]);
+    const row = await db.get('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
     
     if (!row) {
       console.log('User not found:', email.toLowerCase());
@@ -179,8 +179,8 @@ app.get('/api/health', async (req, res) => {
     const result = await db.get('SELECT COUNT(*) as count FROM users');
     res.json({ 
       status: 'ok', 
-      userCount: result.count,
-      database: 'MySQL',
+      userCount: parseInt(result.count),
+      database: 'PostgreSQL',
       timestamp: new Date().toISOString()
     });
   } catch (err) {
@@ -192,7 +192,7 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/debug/users', async (req, res) => {
   try {
     const users = await db.all('SELECT id, name, email, created_at FROM users');
-    res.json({ users, count: users.length, database: 'MySQL' });
+    res.json({ users, count: users.length, database: 'PostgreSQL' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -209,7 +209,7 @@ app.post('/api/expenses', authMiddleware, async (req, res) => {
     if (!date) date = new Date().toISOString().slice(0, 10);
     
     const expenseId = await db.insert(
-      'INSERT INTO expenses (user_id, amount, category, note, date) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO expenses (user_id, amount, category, note, date) VALUES ($1, $2, $3, $4, $5)',
       [userId, amount, category || 'Other', note || '', date]
     );
     
@@ -224,7 +224,7 @@ app.get('/api/expenses/list', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
     const expenses = await db.all(
-      'SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC, created_at DESC',
+      'SELECT * FROM expenses WHERE user_id = $1 ORDER BY date DESC, created_at DESC',
       [userId]
     );
     res.json(expenses);
@@ -238,15 +238,15 @@ app.get('/api/expenses/list', authMiddleware, async (req, res) => {
 app.get('/api/budget', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    let budget = await db.get('SELECT * FROM budgets WHERE user_id = ?', [userId]);
+    let budget = await db.get('SELECT * FROM budgets WHERE user_id = $1', [userId]);
     
     if (!budget) {
       // Create default budget
       const budgetId = await db.insert(
-        'INSERT INTO budgets (user_id) VALUES (?)',
+        'INSERT INTO budgets (user_id) VALUES ($1)',
         [userId]
       );
-      budget = await db.get('SELECT * FROM budgets WHERE id = ?', [budgetId]);
+      budget = await db.get('SELECT * FROM budgets WHERE id = $1', [budgetId]);
     }
     
     res.json(budget);
@@ -262,23 +262,23 @@ app.put('/api/budget', authMiddleware, async (req, res) => {
     const { monthly_budget, weekly_budget, daily_budget } = req.body;
     
     // Check if budget exists
-    const existingBudget = await db.get('SELECT * FROM budgets WHERE user_id = ?', [userId]);
+    const existingBudget = await db.get('SELECT * FROM budgets WHERE user_id = $1', [userId]);
     
     if (existingBudget) {
       // Update existing budget
       await db.query(
-        'UPDATE budgets SET monthly_budget = ?, weekly_budget = ?, daily_budget = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?',
+        'UPDATE budgets SET monthly_budget = $1, weekly_budget = $2, daily_budget = $3, updated_at = CURRENT_TIMESTAMP WHERE user_id = $4',
         [monthly_budget, weekly_budget, daily_budget, userId]
       );
     } else {
       // Create new budget
       await db.insert(
-        'INSERT INTO budgets (user_id, monthly_budget, weekly_budget, daily_budget) VALUES (?, ?, ?, ?)',
+        'INSERT INTO budgets (user_id, monthly_budget, weekly_budget, daily_budget) VALUES ($1, $2, $3, $4)',
         [userId, monthly_budget, weekly_budget, daily_budget]
       );
     }
     
-    const budget = await db.get('SELECT * FROM budgets WHERE user_id = ?', [userId]);
+    const budget = await db.get('SELECT * FROM budgets WHERE user_id = $1', [userId]);
     res.json(budget);
   } catch (err) {
     console.error('Error updating budget:', err);
@@ -295,22 +295,22 @@ app.get('/api/reports', authMiddleware, async (req, res) => {
     let groupBy, dateFormat;
     switch (period) {
       case 'weekly':
-        groupBy = 'YEARWEEK(date)';
-        dateFormat = 'CONCAT(YEAR(date), "-W", WEEK(date))';
+        groupBy = 'EXTRACT(YEAR FROM date), EXTRACT(WEEK FROM date)';
+        dateFormat = 'EXTRACT(YEAR FROM date) || \'-W\' || EXTRACT(WEEK FROM date)';
         break;
       case 'monthly':
-        groupBy = 'DATE_FORMAT(date, "%Y-%m")';
-        dateFormat = 'DATE_FORMAT(date, "%Y-%m")';
+        groupBy = 'EXTRACT(YEAR FROM date), EXTRACT(MONTH FROM date)';
+        dateFormat = 'EXTRACT(YEAR FROM date) || \'-\' || LPAD(EXTRACT(MONTH FROM date)::text, 2, \'0\')';
         break;
       default: // daily
         groupBy = 'date';
-        dateFormat = 'date';
+        dateFormat = 'date::text';
     }
     
     const reports = await db.all(`
       SELECT ${dateFormat} as period, SUM(amount) as total 
       FROM expenses 
-      WHERE user_id = ? 
+      WHERE user_id = $1 
       GROUP BY ${groupBy} 
       ORDER BY date DESC 
       LIMIT 10
