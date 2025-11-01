@@ -46,8 +46,8 @@
     // Auto-dismiss error after 5 seconds
     setTimeout(() => {
       if (alert && alert.parentNode) {
-        alert.classList.remove('show');
-        alert.classList.add('fade');
+        alert.classList.remove("show");
+        alert.classList.add("fade");
         setTimeout(() => {
           if (alert.parentNode) {
             alert.remove();
@@ -118,19 +118,19 @@
 
   // Show success message
   function showSuccess(message) {
-    showToast(message, 'success');
+    showToast(message, "success");
   }
 
   // Toast notification system
-  function showToast(message, type = 'success') {
+  function showToast(message, type = "success") {
     // Remove existing toast
-    const existingToast = document.getElementById('auth-toast');
+    const existingToast = document.getElementById("auth-toast");
     if (existingToast) {
       existingToast.remove();
     }
 
-    const toast = document.createElement('div');
-    toast.id = 'auth-toast';
+    const toast = document.createElement("div");
+    toast.id = "auth-toast";
     toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     toast.style.cssText = `
       top: 20px;
@@ -145,9 +145,9 @@
     `;
 
     const iconMap = {
-      'success': 'bi-check-circle-fill',
-      'error': 'bi-exclamation-triangle-fill',
-      'info': 'bi-info-circle-fill'
+      success: "bi-check-circle-fill",
+      error: "bi-exclamation-triangle-fill",
+      info: "bi-info-circle-fill",
     };
 
     toast.innerHTML = `
@@ -163,7 +163,7 @@
     // Auto remove after 4 seconds
     setTimeout(() => {
       if (toast.parentNode) {
-        toast.style.animation = 'slideOutRight 0.4s ease-in';
+        toast.style.animation = "slideOutRight 0.4s ease-in";
         setTimeout(() => {
           if (toast.parentNode) {
             toast.remove();
@@ -173,9 +173,9 @@
     }, 4000);
 
     // Handle manual close
-    const closeBtn = toast.querySelector('.btn-close');
-    closeBtn.addEventListener('click', () => {
-      toast.style.animation = 'slideOutRight 0.4s ease-in';
+    const closeBtn = toast.querySelector(".btn-close");
+    closeBtn.addEventListener("click", () => {
+      toast.style.animation = "slideOutRight 0.4s ease-in";
       setTimeout(() => {
         if (toast.parentNode) {
           toast.remove();
