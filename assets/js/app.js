@@ -35,15 +35,13 @@
 
   // LocalStorage functions
   const storage = {
-   
     getUserKey(key) {
       const token = localStorage.getItem("token");
       if (!token) return key;
-      
+
       try {
-        
-        const tokenData = JSON.parse(atob(token.split('.')[1]));
-        const userId = tokenData.id || tokenData.userId || 'default';
+        const tokenData = JSON.parse(atob(token.split(".")[1]));
+        const userId = tokenData.id || tokenData.userId || "default";
         return `${key}_${userId}`;
       } catch (err) {
         return `${key}_default`;
@@ -53,53 +51,50 @@
     // Save expenses to localStorage
     saveExpenses(expenses) {
       try {
-        localStorage.setItem(this.getUserKey('expenses'), JSON.stringify(expenses));
-        
-      } catch (err) {
-        
-      }
+        localStorage.setItem(
+          this.getUserKey("expenses"),
+          JSON.stringify(expenses)
+        );
+      } catch (err) {}
     },
 
     // Load expenses from localStorage
     loadExpenses() {
       try {
-        const stored = localStorage.getItem(this.getUserKey('expenses'));
+        const stored = localStorage.getItem(this.getUserKey("expenses"));
         const expenses = stored ? JSON.parse(stored) : [];
-       
+
         return expenses;
       } catch (err) {
-      
         return [];
       }
     },
 
-    // Save budget 
+    // Save budget
     saveBudget(budget) {
       try {
-        localStorage.setItem(this.getUserKey('budget'), JSON.stringify(budget));
-       
-      } catch (err) {
-        
-      }
+        localStorage.setItem(this.getUserKey("budget"), JSON.stringify(budget));
+      } catch (err) {}
     },
 
-    // Load budget 
+    // Load budget
     loadBudget() {
       try {
-        const stored = localStorage.getItem(this.getUserKey('budget'));
-        const budget = stored ? JSON.parse(stored) : {
-          monthly_budget: 1000.0,
-          weekly_budget: 250.0,
-          daily_budget: 35.0
-        };
-        
+        const stored = localStorage.getItem(this.getUserKey("budget"));
+        const budget = stored
+          ? JSON.parse(stored)
+          : {
+              monthly_budget: 1000.0,
+              weekly_budget: 250.0,
+              daily_budget: 35.0,
+            };
+
         return budget;
       } catch (err) {
-        
         return {
           monthly_budget: 1000.0,
           weekly_budget: 250.0,
-          daily_budget: 35.0
+          daily_budget: 35.0,
         };
       }
     },
@@ -107,76 +102,62 @@
     // Save username to localStorage
     saveUsername(username) {
       try {
-        localStorage.setItem(this.getUserKey('username'), username);
-        
-      } catch (err) {
-      
-      }
+        localStorage.setItem(this.getUserKey("username"), username);
+      } catch (err) {}
     },
 
     // Load username from localStorage
     loadUsername() {
       try {
-        const stored = localStorage.getItem(this.getUserKey('username'));
-        
-        return stored || 'User';
+        const stored = localStorage.getItem(this.getUserKey("username"));
+
+        return stored || "User";
       } catch (err) {
-       
-        return 'User';
+        return "User";
       }
     },
 
     // Save username to localStorage
     saveUsername(username) {
       try {
-        localStorage.setItem('username', username);
-        
-      } catch (err) {
-        
-      }
+        localStorage.setItem("username", username);
+      } catch (err) {}
     },
 
     // Load username from localStorage
     loadUsername() {
       try {
-        const username = localStorage.getItem('username') || 'User';
-        
+        const username = localStorage.getItem("username") || "User";
+
         return username;
       } catch (err) {
-        
-        return 'User';
+        return "User";
       }
     },
 
     // Clear user data (for logout)
     clearUserData() {
       try {
-        localStorage.removeItem(this.getUserKey('expenses'));
-        localStorage.removeItem(this.getUserKey('budget'));
-        localStorage.removeItem('username');
-        
-      } catch (err) {
-      
-      }
-    }
+        localStorage.removeItem(this.getUserKey("expenses"));
+        localStorage.removeItem(this.getUserKey("budget"));
+        localStorage.removeItem("username");
+      } catch (err) {}
+    },
   };
 
   function updateUserInfo(userName = "") {
-   
-    
     // Handle different possible name formats
     const displayName = userName || storage.loadUsername();
-    
+
     // Save username to localStorage for future use
-    if (userName && userName !== 'User') {
+    if (userName && userName !== "User") {
       storage.saveUsername(userName);
     }
-    
+
     // Update sidebar user info
     const userNameSidebar = document.getElementById("user-name-sidebar");
     if (userNameSidebar) {
       userNameSidebar.textContent = `Welcome, ${displayName.toUpperCase()}!`;
-     
     } else {
       console.error("user-name-sidebar element not found");
     }
@@ -197,15 +178,11 @@
     // Show logout toast
     showLogoutToast("Logging out...", "info");
 
-    
     setTimeout(() => {
       localStorage.removeItem("token");
-      
 
-      
       showLogoutToast("Logged out successfully!", "success");
 
-      
       setTimeout(() => {
         window.location.href = "/login";
       }, 800);
@@ -214,7 +191,6 @@
 
   // Logout toast function
   function showLogoutToast(message, type = "info") {
-    
     const existingToast = document.getElementById("logout-toast");
     if (existingToast) {
       existingToast.remove();
@@ -267,20 +243,18 @@
   // Check authentication and load user info
   function checkAuth() {
     const token = localStorage.getItem("token");
-    
 
     if (!token) {
       console.log("No token found, redirecting to login");
-      
+
       window.location.href = "/login";
       return;
     }
 
     console.log("Checking token validity...");
-   
+
     const storedUsername = storage.loadUsername();
-    if (storedUsername && storedUsername !== 'User') {
-      
+    if (storedUsername && storedUsername !== "User") {
       updateUserInfo(storedUsername);
       loadDashboardData();
       setCurrentDate();
@@ -293,15 +267,15 @@
     // If no stored username, try to get it from API
     api("/me")
       .then((data) => {
-       
-        
-       
-        const userName = data.user?.name || data.user?.username || data.user?.displayName || "User";
-        
-        
+        const userName =
+          data.user?.name ||
+          data.user?.username ||
+          data.user?.displayName ||
+          "User";
+
         // Save username to localStorage
         storage.saveUsername(userName);
-        
+
         updateUserInfo(userName);
         loadDashboardData();
         setCurrentDate();
@@ -310,15 +284,12 @@
         initializeEventListeners();
       })
       .catch((err) => {
-       
         localStorage.removeItem("token");
 
-       
         if (err.error === "Invalid token") {
           alert("Your session has expired. Please log in again.");
         }
 
-        
         window.location.href = "/login";
       });
   }
@@ -335,8 +306,10 @@
   // Display current date in the dashboard header
   function displayCurrentDate() {
     const currentDateElement = document.getElementById("current-date");
-    const currentDateMobileElement = document.getElementById("current-date-mobile");
-    
+    const currentDateMobileElement = document.getElementById(
+      "current-date-mobile"
+    );
+
     if (currentDateElement || currentDateMobileElement) {
       const today = new Date();
       const options = {
@@ -346,7 +319,7 @@
         day: "numeric",
       };
       const formattedDate = today.toLocaleDateString("en-US", options);
-      
+
       // Update both desktop and mobile date displays
       if (currentDateElement) {
         currentDateElement.textContent = formattedDate;
@@ -357,7 +330,7 @@
     }
   }
 
-  // Update daily icon 
+  // Update daily icon
   function updateDailyIcon() {
     const dailyIcon = document.getElementById("daily-icon");
     if (dailyIcon) {
@@ -368,7 +341,6 @@
       dailyIcon.innerHTML = dayOfMonth;
       dailyIcon.classList.add("dynamic-day");
 
-      
       const fullDate = today.toLocaleDateString("en-US", {
         weekday: "long",
         year: "numeric",
@@ -381,7 +353,6 @@
 
   // Initialize all event listeners
   function initializeEventListeners() {
-
     document
       .getElementById("expense-form")
       .addEventListener("submit", handleAddExpense);
@@ -390,7 +361,6 @@
       btn.addEventListener("click", handlePeriodChange);
     });
 
-    
     const quickAddBtn = document.getElementById("quick-add-btn");
     if (quickAddBtn) {
       quickAddBtn.addEventListener("click", () => {
@@ -404,7 +374,6 @@
 
   // Initialize sidebar navigation functionality
   function initializeSidebarNavigation() {
-    
     const sidebarToggle = document.getElementById("sidebar-toggle");
     const sidebar = document.getElementById("sidebar");
     const mainContent = document.querySelector(".main-content");
@@ -457,7 +426,6 @@
     const quickActionBtns = document.querySelectorAll("[data-section]");
     quickActionBtns.forEach((btn) => {
       if (!btn.classList.contains("nav-link")) {
-       
         btn.addEventListener("click", (e) => {
           const targetSection = btn.getAttribute("data-section");
           navigateToSection(targetSection, true);
@@ -474,16 +442,14 @@
     // Handle browser back/forward navigation
     window.addEventListener("popstate", (e) => {
       const section = e.state?.section || getCurrentSectionFromUrl();
-      navigateToSection(section, false); 
+      navigateToSection(section, false);
     });
 
-    
     const initialSection = getCurrentSectionFromUrl();
     if (initialSection !== "dashboard") {
       navigateToSection(initialSection, false);
     }
   }
-
 
   function getCurrentSectionFromUrl() {
     const path = window.location.pathname;
@@ -528,7 +494,6 @@
       pageTitle.textContent = sectionTitles[targetSection] || "Dashboard";
     }
 
-    
     if (pushHistory) {
       const newUrl =
         targetSection === "dashboard"
@@ -537,15 +502,12 @@
       history.pushState({ section: targetSection }, "", newUrl);
     }
 
-   
     handleSectionSwitch(targetSection);
   }
 
-  
   function handleSectionSwitch(section) {
     switch (section) {
       case "dashboard":
-       
         loadDashboardData();
         break;
       case "expenses":
@@ -569,7 +531,6 @@
         }
         break;
       case "categories":
-        
         loadCategories();
         break;
     }
@@ -602,7 +563,7 @@
       amount: parseFloat(fd.get("amount")),
       category: fd.get("category"),
       note: fd.get("note"),
-      date: fd.get("date") || new Date().toISOString().split('T')[0],
+      date: fd.get("date") || new Date().toISOString().split("T")[0],
     };
 
     // Show loading state
@@ -616,26 +577,24 @@
       const expense = {
         id: Date.now(),
         amount: payload.amount,
-        category: payload.category || 'Other',
-        note: payload.note || '',
+        category: payload.category || "Other",
+        note: payload.note || "",
         date: payload.date,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       };
 
       // Add to current expenses
       currentExpenses.unshift(expense);
-      
+
       // Save to localStorage
       storage.saveExpenses(currentExpenses);
-      
+
       // Update UI
       e.target.reset();
       setCurrentDate();
       loadDashboardData();
       showSuccessToast("Expense added successfully!");
-      
     } catch (err) {
-      
       showErrorToast("Failed to add expense");
     } finally {
       submitBtn.disabled = false;
@@ -665,8 +624,9 @@
         hideLoadingState();
       })
       .catch((err) => {
-       
+        console.error("Error loading dashboard data:", err);
         hideLoadingState();
+        // Don't throw the error to prevent it from bubbling up to delete function
       });
   }
 
@@ -686,7 +646,7 @@
       try {
         // Load from localStorage
         currentExpenses = storage.loadExpenses();
-        
+
         const container = document.getElementById("expense-list");
         const countBadge = document.getElementById("expense-count");
 
@@ -713,9 +673,7 @@
         // Also update Recent Activity on dashboard
         updateRecentActivity(currentExpenses.slice(0, 5)); // Show last 5 expenses
         resolve();
-        
       } catch (err) {
-    
         const container = document.getElementById("expense-list");
         container.innerHTML = `
           <div class="text-center text-danger py-4">
@@ -918,7 +876,7 @@
         // Generate reports from localStorage data
         const expenses = storage.loadExpenses();
         const rows = generateReportsFromExpenses(expenses, currentPeriod);
-        
+
         // Store data for PDF generation
         window.currentReportData = rows || [];
         const output = document.getElementById("report-output");
@@ -963,9 +921,7 @@
         html += "</div>";
         output.innerHTML = html;
         resolve();
-        
       } catch (err) {
-        
         document.getElementById("report-output").innerHTML = `
           <div class="text-center text-danger py-4">
             <i class="bi bi-exclamation-triangle fs-1 mb-3 d-block"></i>
@@ -982,34 +938,34 @@
     if (!expenses || expenses.length === 0) return [];
 
     const reports = {};
-    
-    expenses.forEach(expense => {
+
+    expenses.forEach((expense) => {
       const date = new Date(expense.date);
       let periodKey;
-      
+
       switch (period) {
-        case 'weekly':
+        case "weekly":
           const weekStart = new Date(date);
           weekStart.setDate(date.getDate() - date.getDay());
-          periodKey = weekStart.toISOString().split('T')[0];
+          periodKey = weekStart.toISOString().split("T")[0];
           break;
-        case 'monthly':
+        case "monthly":
           periodKey = date.toISOString().slice(0, 7); // YYYY-MM
           break;
         default: // daily
-          periodKey = expense.date.split('T')[0];
+          periodKey = expense.date.split("T")[0];
       }
-      
+
       if (!reports[periodKey]) {
         reports[periodKey] = {
           period: periodKey,
-          total: 0
+          total: 0,
         };
       }
-      
+
       reports[periodKey].total += parseFloat(expense.amount || 0);
     });
-    
+
     return Object.values(reports)
       .sort((a, b) => new Date(b.period) - new Date(a.period))
       .slice(0, 10);
@@ -1017,8 +973,6 @@
 
   // Load and update stats cards
   function loadStats() {
-   
-
     if (currentExpenses.length === 0) {
       updateStatsCards({
         totalSpent: 0,
@@ -1034,11 +988,9 @@
     const today = new Date().toISOString().split("T")[0];
     const thisMonth = new Date().toISOString().slice(0, 7);
 
-    
-
     // Calculate total spent this month
     const monthlyExpenses = currentExpenses.filter((e) => {
-      const expenseDate = e.date.split("T")[0]; 
+      const expenseDate = e.date.split("T")[0];
       return expenseDate.startsWith(thisMonth);
     });
     const totalSpent = monthlyExpenses.reduce(
@@ -1092,7 +1044,6 @@
         : "None";
 
     const topCategoryAmount = categoryTotals[topCategory] || 0;
-
 
     updateStatsCards({
       totalSpent,
@@ -1153,7 +1104,7 @@
     showToast(message, "danger");
   }
 
-  // Create toast container 
+  // Create toast container
   function getToastContainer() {
     let container = document.getElementById("toast-container");
     if (!container) {
@@ -1197,17 +1148,15 @@
       </div>
     `;
 
-    
     container.appendChild(toast);
 
-   
     setTimeout(() => {
       if (toast.parentNode) {
         toast.style.animation = "slideOutRight 0.3s ease-in";
         setTimeout(() => {
           if (toast.parentNode) {
             toast.remove();
-           
+
             if (container.children.length === 0) {
               container.remove();
             }
@@ -1216,14 +1165,13 @@
       }
     }, 4000);
 
-   
     const closeBtn = toast.querySelector(".btn-close");
     closeBtn.addEventListener("click", () => {
       toast.style.animation = "slideOutRight 0.3s ease-in";
       setTimeout(() => {
         if (toast.parentNode) {
           toast.remove();
-          
+
           if (container.children.length === 0) {
             container.remove();
           }
@@ -1240,7 +1188,6 @@
       return;
     }
 
-    
     const form = document.getElementById("edit-expense-form");
     form.querySelector('input[name="amount"]').value = expense.amount;
     form.querySelector('select[name="category"]').value = expense.category;
@@ -1252,13 +1199,11 @@
       .getElementById("save-expense-edit")
       .setAttribute("data-expense-id", expenseId);
 
-    
     const modal = new bootstrap.Modal(
       document.getElementById("editExpenseModal")
     );
     modal.show();
   };
-
 
   function saveExpenseEdit() {
     const saveBtn = document.getElementById("save-expense-edit");
@@ -1283,25 +1228,39 @@
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
 
-    api(`/expenses/${expenseId}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    })
-      .then(() => {
+    try {
+      // Find and update the expense in currentExpenses array
+      const expenseIndex = currentExpenses.findIndex((e) => e.id == expenseId);
+      if (expenseIndex > -1) {
+        // Update the expense with new data
+        currentExpenses[expenseIndex] = {
+          ...currentExpenses[expenseIndex],
+          amount: parseFloat(payload.amount),
+          category: payload.category,
+          note: payload.note,
+          date: payload.date,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Save updated expenses to localStorage
+        storage.saveExpenses(currentExpenses);
+
         const modal = bootstrap.Modal.getInstance(
           document.getElementById("editExpenseModal")
         );
         modal.hide();
         loadDashboardData();
         showSuccessToast("Expense updated successfully!");
-      })
-      .catch((err) => {
-        showErrorToast(err.error || "Failed to update expense");
-      })
-      .finally(() => {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalText;
-      });
+      } else {
+        showErrorToast("Expense not found");
+      }
+    } catch (err) {
+      console.error("Error updating expense:", err);
+      showErrorToast("Failed to update expense");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    }
   }
 
   // Delete expense function
@@ -1366,29 +1325,81 @@
       '<i class="bi bi-hourglass-split me-2"></i>Deleting...';
 
     try {
+      console.log("Attempting to delete expense with ID:", expenseId);
+
       // Remove from currentExpenses array
-      const expenseIndex = currentExpenses.findIndex(e => e.id == expenseId);
+      const expenseIndex = currentExpenses.findIndex((e) => e.id == expenseId);
+      console.log("Found expense at index:", expenseIndex);
+
       if (expenseIndex > -1) {
         currentExpenses.splice(expenseIndex, 1);
-        
+        console.log(
+          "Expense removed from array. Remaining expenses:",
+          currentExpenses.length
+        );
+
         // Save updated expenses to localStorage
         storage.saveExpenses(currentExpenses);
-        
-        const modal = bootstrap.Modal.getInstance(
-          document.getElementById("deleteExpenseModal")
-        );
-        modal.hide();
+        console.log("Expenses saved to localStorage");
+
+        // Close modal properly first
+        console.log("Closing modal...");
+
+        const modalElement = document.getElementById("deleteExpenseModal");
+        if (modalElement) {
+          try {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+              console.log("Using Bootstrap modal instance to hide");
+              modal.hide();
+            } else {
+              console.log("No Bootstrap instance found, removing manually");
+              // Manual cleanup
+              const backdrop = document.querySelector(".modal-backdrop");
+              if (backdrop) backdrop.remove();
+              modalElement.remove();
+              document.body.classList.remove("modal-open");
+              document.body.style.overflow = "";
+              document.body.style.paddingRight = "";
+            }
+          } catch (err) {
+            console.log("Error with Bootstrap modal, removing manually:", err);
+            // Fallback: manual cleanup
+            const backdrop = document.querySelector(".modal-backdrop");
+            if (backdrop) backdrop.remove();
+            modalElement.remove();
+            document.body.classList.remove("modal-open");
+            document.body.style.overflow = "";
+            document.body.style.paddingRight = "";
+          }
+        } else {
+          console.log("Modal element not found");
+        }
+
+        // Restore button state after modal is handled
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalText;
+
+        console.log("Loading dashboard data...");
         loadDashboardData();
         showSuccessToast("Expense deleted successfully!");
+        console.log("Delete operation completed successfully");
       } else {
+        console.log("Expense not found in array");
+        // Restore button state before showing error
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalText;
         showErrorToast("Expense not found");
       }
     } catch (err) {
-     
-      showErrorToast("Failed to delete expense");
-    } finally {
-      deleteBtn.disabled = false;
-      deleteBtn.innerHTML = originalText;
+      console.error("Error deleting expense:", err);
+      console.error("Error stack:", err.stack);
+      // Restore button state before showing error
+      if (deleteBtn) {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalText;
+      }
+      showErrorToast("Failed to delete expense: " + err.message);
     }
   };
 
@@ -1400,11 +1411,10 @@
         updateBudgetDisplay();
         resolve();
       } catch (err) {
-       
         userBudget = {
           monthly_budget: 1000.0,
           weekly_budget: 250.0,
-          daily_budget: 35.0
+          daily_budget: 35.0,
         };
         updateBudgetDisplay();
         resolve();
@@ -1424,7 +1434,7 @@
       "monthly-budget"
     ).textContent = `₦${userBudget.monthly_budget.toFixed(2)}`;
 
-    // Monthly Remaining will be calculated 
+    // Monthly Remaining will be calculated
 
     // Also update the form inputs
     const monthlyInput = document.querySelector('input[name="monthly_budget"]');
@@ -1439,7 +1449,6 @@
   // Update budget progress bars
   function updateBudgetProgress() {
     if (currentExpenses.length === 0) {
-     
       const remainingElement = document.getElementById("budget-remaining");
       if (remainingElement) {
         remainingElement.className = "fw-bold text-success";
@@ -1456,7 +1465,7 @@
     // Calculate current week (Monday to Sunday)
     const now = new Date();
     const dayOfWeek = now.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; 
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     const monday = new Date(now);
     monday.setDate(now.getDate() + mondayOffset);
     const weekStart = monday.toISOString().split("T")[0];
@@ -1497,7 +1506,6 @@
 
     remainingElement.textContent = `₦${Math.abs(monthlyRemaining).toFixed(2)}`;
 
-    
     if (monthlyRemaining < 0) {
       remainingElement.className = "fw-bold text-danger";
       remainingElement.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>-₦${Math.abs(
@@ -1531,12 +1539,10 @@
 
     // Enhanced color coding with smooth transitions
     if (actualPercentage >= 100) {
-      
       progressBar.className =
         "progress-bar bg-danger progress-bar-striped progress-bar-animated";
       progressBar.style.background = "linear-gradient(45deg, #dc3545, #c82333)";
     } else if (actualPercentage >= 90) {
-      
       progressBar.className = "progress-bar";
       progressBar.style.background = "linear-gradient(90deg, #fd7e14, #dc3545)";
     } else if (actualPercentage >= 75) {
@@ -1564,14 +1570,12 @@
     updateBudgetTextColor(elementId, actualPercentage, spent, budget);
   }
 
- 
   function updateBudgetTextColor(elementId, percentage, spent, budget) {
     const budgetType = elementId.replace("-progress", "");
     const budgetElement = document.getElementById(`${budgetType}-budget`);
     const parentContainer = budgetElement?.closest(".mb-3");
 
     if (parentContainer) {
-      
       parentContainer.classList.remove(
         "budget-safe",
         "budget-warning",
@@ -1610,7 +1614,6 @@
         )}`;
       }
     } else {
-      
       const exceededElement =
         parentContainer?.querySelector(".exceeded-amount");
       if (exceededElement) {
@@ -1621,7 +1624,6 @@
 
   // Open budget modal
   window.openBudgetModal = function () {
-    
     document.querySelector('input[name="monthly_budget"]').value =
       userBudget.monthly_budget;
     document.querySelector('input[name="weekly_budget"]').value =
@@ -1634,7 +1636,7 @@
   };
 
   // Save budget settings
-  
+
   function setupBudgetAutoCalculation() {
     const monthlyInput = document.querySelector('input[name="monthly_budget"]');
     const weeklyInput = document.querySelector('input[name="weekly_budget"]');
@@ -1644,9 +1646,8 @@
       monthlyInput.addEventListener("input", function () {
         const monthlyAmount = parseFloat(this.value) || 0;
         if (monthlyAmount > 0) {
-        
           const weeklyAmount = monthlyAmount / 4.33;
-         
+
           const dailyAmount = monthlyAmount / 30;
 
           // Update the input fields
@@ -1721,15 +1722,14 @@
         monthly_budget: payload.monthly_budget,
         weekly_budget: payload.weekly_budget,
         daily_budget: payload.daily_budget,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
-      
+
       storage.saveBudget(userBudget);
-      
+
       updateBudgetDisplay();
       updateBudgetProgress();
       showSuccessToast("Budget settings updated successfully!");
-      
     } catch (err) {
       console.error("Error saving budget:", err);
       showErrorToast("Failed to update budget settings");
@@ -1783,61 +1783,61 @@
   };
 
   // Edit expense function
-  window.editExpense = function (expenseId) {
-    const expense = currentExpenses.find((e) => e.id === expenseId);
-    if (!expense) {
-      showErrorToast("Expense not found");
-      return;
-    }
+  // window.editExpense = function (expenseId) {
+  //   const expense = currentExpenses.find((e) => e.id === expenseId);
+  //   if (!expense) {
+  //     showErrorToast("Expense not found");
+  //     return;
+  //   }
 
-    // Populate the existing modal with expense data
-    const form = document.getElementById("edit-expense-form");
-    form.querySelector('input[name="amount"]').value = expense.amount;
-    form.querySelector('select[name="category"]').value = expense.category;
-    form.querySelector('input[name="date"]').value = expense.date;
-    form.querySelector('input[name="note"]').value = expense.note || "";
+  //   // Populate the existing modal with expense data
+  //   const form = document.getElementById("edit-expense-form");
+  //   form.querySelector('input[name="amount"]').value = expense.amount;
+  //   form.querySelector('select[name="category"]').value = expense.category;
+  //   form.querySelector('input[name="date"]').value = expense.date;
+  //   form.querySelector('input[name="note"]').value = expense.note || "";
 
-    // Store the expense ID for saving
-    document
-      .getElementById("save-expense-edit")
-      .setAttribute("data-expense-id", expenseId);
+  //   // Store the expense ID for saving
+  //   document
+  //     .getElementById("save-expense-edit")
+  //     .setAttribute("data-expense-id", expenseId);
 
-    // Show the modal
-    const modal = new bootstrap.Modal(
-      document.getElementById("editExpenseModal")
-    );
-    modal.show();
-  };
+  //   // Show the modal
+  //   const modal = new bootstrap.Modal(
+  //     document.getElementById("editExpenseModal")
+  //   );
+  //   modal.show();
+  // };
 
   // Delete expense function
-  window.deleteExpense = function (expenseId) {
-    const expense = currentExpenses.find((e) => e.id === expenseId);
-    if (!expense) {
-      showErrorToast("Expense not found");
-      return;
-    }
+  // window.deleteExpense = function (expenseId) {
+  //   const expense = currentExpenses.find((e) => e.id === expenseId);
+  //   if (!expense) {
+  //     showErrorToast("Expense not found");
+  //     return;
+  //   }
 
-    // Populate the existing modal with expense details
-    const expenseDetails = document.getElementById("expense-details");
-    expenseDetails.innerHTML = `
-      <strong>${expense.category}</strong><br>
-      <span class="text-primary fs-5">$${parseFloat(expense.amount).toFixed(
-        2
-      )}</span><br>
-      <small class="text-muted">${expense.note || "No note"}</small>
-    `;
+  //   // Populate the existing modal with expense details
+  //   const expenseDetails = document.getElementById("expense-details");
+  //   expenseDetails.innerHTML = `
+  //     <strong>${expense.category}</strong><br>
+  //     <span class="text-primary fs-5">$${parseFloat(expense.amount).toFixed(
+  //       2
+  //     )}</span><br>
+  //     <small class="text-muted">${expense.note || "No note"}</small>
+  //   `;
 
-    // Store the expense ID for deletion
-    document
-      .getElementById("confirm-delete-expense")
-      .setAttribute("data-expense-id", expenseId);
+  //   // Store the expense ID for deletion
+  //   document
+  //     .getElementById("confirm-delete-expense")
+  //     .setAttribute("data-expense-id", expenseId);
 
-    // Show the modal
-    const modal = new bootstrap.Modal(
-      document.getElementById("deleteExpenseModal")
-    );
-    modal.show();
-  };
+  //   // Show the modal
+  //   const modal = new bootstrap.Modal(
+  //     document.getElementById("deleteExpenseModal")
+  //   );
+  //   modal.show();
+  // };
 
   // Save expense edit - updated to work with the HTML modal
   function saveExpenseEdit() {
@@ -1863,25 +1863,39 @@
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
 
-    api(`/expenses/${expenseId}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    })
-      .then(() => {
+    try {
+      // Find and update the expense in currentExpenses array
+      const expenseIndex = currentExpenses.findIndex((e) => e.id == expenseId);
+      if (expenseIndex > -1) {
+        // Update the expense with new data
+        currentExpenses[expenseIndex] = {
+          ...currentExpenses[expenseIndex],
+          amount: parseFloat(payload.amount),
+          category: payload.category,
+          note: payload.note,
+          date: payload.date,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Save updated expenses to localStorage
+        storage.saveExpenses(currentExpenses);
+
         const modal = bootstrap.Modal.getInstance(
           document.getElementById("editExpenseModal")
         );
         modal.hide();
         loadDashboardData();
         showSuccessToast("Expense updated successfully!");
-      })
-      .catch((err) => {
-        showErrorToast(err.error || "Failed to update expense");
-      })
-      .finally(() => {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalText;
-      });
+      } else {
+        showErrorToast("Expense not found");
+      }
+    } catch (err) {
+      console.error("Error updating expense:", err);
+      showErrorToast("Failed to update expense");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    }
   }
 
   // Confirm delete expense
@@ -1900,22 +1914,70 @@
     deleteBtn.innerHTML =
       '<i class="bi bi-hourglass-split me-2"></i>Deleting...';
 
-    api(`/expenses/${expenseId}`, { method: "DELETE" })
-      .then(() => {
-        const modal = bootstrap.Modal.getInstance(
-          document.getElementById("deleteExpenseModal")
-        );
-        modal.hide();
-        loadDashboardData();
-        showSuccessToast("Expense deleted successfully!");
-      })
-      .catch((err) => {
-        showErrorToast(err.error || "Failed to delete expense");
-      })
-      .finally(() => {
+    try {
+      // Remove from currentExpenses array
+      const expenseIndex = currentExpenses.findIndex((e) => e.id == expenseId);
+      if (expenseIndex > -1) {
+        currentExpenses.splice(expenseIndex, 1);
+
+        // Save updated expenses to localStorage
+        storage.saveExpenses(currentExpenses);
+
+        // Close modal properly first
+        console.log("Closing modal...");
+
+        const modalElement = document.getElementById("deleteExpenseModal");
+        if (modalElement) {
+          try {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+              console.log("Using Bootstrap modal instance to hide");
+              modal.hide();
+            } else {
+              console.log("No Bootstrap instance found, removing manually");
+              // Manual cleanup
+              const backdrop = document.querySelector(".modal-backdrop");
+              if (backdrop) backdrop.remove();
+              modalElement.remove();
+              document.body.classList.remove("modal-open");
+              document.body.style.overflow = "";
+              document.body.style.paddingRight = "";
+            }
+          } catch (err) {
+            console.log("Error with Bootstrap modal, removing manually:", err);
+            // Fallback: manual cleanup
+            const backdrop = document.querySelector(".modal-backdrop");
+            if (backdrop) backdrop.remove();
+            modalElement.remove();
+            document.body.classList.remove("modal-open");
+            document.body.style.overflow = "";
+            document.body.style.paddingRight = "";
+          }
+        } else {
+          console.log("Modal element not found");
+        }
+
+        // Restore button state after modal is handled
         deleteBtn.disabled = false;
         deleteBtn.innerHTML = originalText;
-      });
+
+        loadDashboardData();
+        showSuccessToast("Expense deleted successfully!");
+      } else {
+        // Restore button state before showing error
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalText;
+        showErrorToast("Expense not found");
+      }
+    } catch (err) {
+      console.error("Error deleting expense:", err);
+      // Restore button state before showing error
+      if (deleteBtn) {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalText;
+      }
+      showErrorToast("Failed to delete expense");
+    }
   }
 
   // Add event listeners for modal buttons
@@ -2183,7 +2245,7 @@
         ?.textContent?.replace("Welcome, ", "")
         .replace("!", "") || "User";
 
-    // Sort expenses by date 
+    // Sort expenses by date
     const sortedExpenses = [...currentExpenses].sort(
       (a, b) => new Date(b.date) - new Date(a.date)
     );
@@ -2340,7 +2402,7 @@
       if (runningBalance >= 0) {
         doc.setTextColor(40, 167, 69);
       } else {
-        doc.setTextColor(220, 53, 69); 
+        doc.setTextColor(220, 53, 69);
       }
       doc.text(`NGN ${runningBalance.toFixed(2)}`, 175, yPosition);
 
@@ -2433,23 +2495,28 @@
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
 
-    api("/budget", {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    })
-      .then((budget) => {
-        userBudget = budget;
-        updateBudgetDisplay();
-        updateBudgetProgress();
-        showSuccessToast("Budget settings updated successfully!");
-      })
-      .catch((err) => {
-        showErrorToast(err.error || "Failed to update budget settings");
-      })
-      .finally(() => {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalText;
-      });
+    try {
+      // Save to localStorage instead of API call
+      userBudget = {
+        id: Date.now(),
+        monthly_budget: payload.monthly_budget,
+        weekly_budget: payload.weekly_budget,
+        daily_budget: payload.daily_budget,
+        updated_at: new Date().toISOString(),
+      };
+
+      storage.saveBudget(userBudget);
+
+      updateBudgetDisplay();
+      updateBudgetProgress();
+      showSuccessToast("Budget settings updated successfully!");
+    } catch (err) {
+      console.error("Error saving budget:", err);
+      showErrorToast("Failed to update budget settings");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    }
   };
 
   // Auto-calculate weekly and daily budgets when monthly budget changes
