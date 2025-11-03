@@ -67,7 +67,7 @@
         </ul>
       </nav>
 
-      <div class="sidebar-footer mb-4">
+      <div class="sidebar-footer my-5">
         <div class="user-info">
           <span id="user-name-sidebar">Welcome!</span>
           <button class="btn btn-outline-light btn-sm" id="logout-btn">
@@ -83,7 +83,13 @@
         <button class="btn btn-link sidebar-toggle" id="sidebar-toggle">
           <i class="bi bi-list"></i>
         </button>
-        <h5 class="page-title mb-0" id="page-title">Dashboard</h5>
+        <div class="page-header-content">
+          <h5 class="page-title mb-0" id="page-title">Dashboard</h5>
+          <div class="current-date-mobile">
+            <i class="bi bi-calendar3 me-2 text-muted"></i>
+            <span id="current-date-mobile" class="text-muted fw-medium"></span>
+          </div>
+        </div>
         <div class="ms-auto d-flex align-items-center">
           <div class="current-date-display">
             <i class="bi bi-calendar3 me-2 text-muted"></i>
@@ -566,17 +572,17 @@
                     <div class="col-12">
                       <h6 class="mb-3">Category Breakdown</h6>
                       <div id="category-list">
-                        <!-- Categories will be populated here -->
+                       
                       </div>
                     </div>
                   </div>
 
-                  <!-- Category Usage Chart -->
+                  <!-- Category Usage -->
                   <div class="row mt-4">
                     <div class="col-12">
                       <h6 class="mb-3">Category Usage This Month</h6>
                       <div id="category-chart">
-                        <!-- Chart will be populated here -->
+                       
                       </div>
                     </div>
                   </div>

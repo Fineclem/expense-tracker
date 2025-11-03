@@ -83,9 +83,20 @@
         <div class="card-header bg-white border-0 py-3">
           <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="bi bi-people me-2"></i>All Users</h5>
-            <button class="btn btn-primary btn-sm" onclick="refreshData()">
-              <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-            </button>
+            <div>
+              <button
+                class="btn btn-primary btn-sm me-2"
+                onclick="refreshData()"
+              >
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+              </button>
+              <button
+                class="btn btn-outline-danger btn-sm"
+                onclick="clearUserData()"
+              >
+                <i class="bi bi-trash me-1"></i>Clear Data
+              </button>
+            </div>
           </div>
         </div>
         <div class="card-body p-0">
@@ -129,43 +140,124 @@
       // Admin panel functionality
       async function loadAdminData() {
         try {
-          // Try to fetch users from external API
-          await fetchExternalUsers();
+          // Load users from localStorage
+          const users = loadUsersFromStorage();
 
-          // Load health
-          const healthResponse = await fetch("/api/health");
-          const healthData = await healthResponse.json();
-
-          updateHealthStats(healthData);
+          if (users.length > 0) {
+            updateStats(users);
+            updateUsersTable(users);
+            updateHealthStats({ status: "ok" });
+            showSuccessMessage(`Found ${users.length} users in local storage`);
+          } else {
+            showNoUsersMessage();
+          }
         } catch (error) {
           console.error("Error loading admin data:", error);
           showError("Failed to load admin data");
         }
       }
 
-      async function fetchExternalUsers() {
+      function loadUsersFromStorage() {
         try {
-          console.log("Fetching users via server proxy...");
-          const response = await fetch("/api/debug/users");
-          const data = await response.json();
+          // Get all localStorage keys that might contain user data
+          const users = [];
 
-          console.log("Server response:", data);
+          // Check for stored usernames (from your app's storage system)
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
 
-          if (data.success && data.users && data.users.length > 0) {
-            console.log(`Found ${data.users.length} users from ${data.source}`);
-            updateStats(data.users);
-            updateUsersTable(data.users);
-            showSuccessMessage(
-              `Found ${data.users.length} users from external API`
-            );
-          } else {
-            console.log("No users found, showing external API info");
-            showExternalApiInfo(data);
+            // Look for username keys (both global and user-specific)
+            if (key === "username" || key.startsWith("username_")) {
+              const username = localStorage.getItem(key);
+              if (username && username !== "User") {
+                const userId =
+                  key === "username" ? "default" : key.split("_")[1];
+
+                // Try to get additional user info from token if available
+                let email = "N/A";
+                let createdAt = null;
+
+                try {
+                  const token = localStorage.getItem("token");
+                  if (token) {
+                    const tokenData = JSON.parse(atob(token.split(".")[1]));
+                    email = tokenData.email || "N/A";
+                    createdAt = tokenData.iat
+                      ? new Date(tokenData.iat * 1000).toISOString()
+                      : null;
+                  }
+                } catch (err) {
+                  // Token parsing failed, use defaults
+                }
+
+                users.push({
+                  id: userId,
+                  name: username,
+                  username: username,
+                  email: email,
+                  created_at: createdAt || new Date().toISOString(),
+                  status: "active",
+                });
+              }
+            }
           }
+
+          // If no users found in localStorage, create a demo user for testing
+          if (users.length === 0) {
+            const currentUser = localStorage.getItem("username");
+            if (currentUser && currentUser !== "User") {
+              users.push({
+                id: 1,
+                name: currentUser,
+                username: currentUser,
+                email: "user@example.com",
+                created_at: new Date().toISOString(),
+                status: "active",
+              });
+            }
+          }
+
+          return users;
         } catch (error) {
-          console.error("Error fetching external users:", error);
-          showExternalApiInfo();
+          console.error("Error loading users from storage:", error);
+          return [];
         }
+      }
+
+      function showNoUsersMessage() {
+        const tbody = document.getElementById("users-table-body");
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-5">
+              <div class="mb-3">
+                <i class="bi bi-person-plus fs-1 text-muted mb-3 d-block"></i>
+                <h5 class="text-muted">No Users Found</h5>
+                <p class="text-muted mb-3">No user data found in local storage</p>
+              </div>
+              <div class="alert alert-info">
+                <h6><i class="bi bi-info-circle me-2"></i>How to see users:</h6>
+                <ul class="mb-0 text-start">
+                  <li>Register a new account on the signup page</li>
+                  <li>Login with existing credentials</li>
+                  <li>User data will appear here after authentication</li>
+                </ul>
+              </div>
+              <div class="mt-3">
+                <a href="/signup" class="btn btn-primary btn-sm me-2">
+                  <i class="bi bi-person-plus me-1"></i>Go to Signup
+                </a>
+                <a href="/login" class="btn btn-secondary btn-sm">
+                  <i class="bi bi-box-arrow-in-right me-1"></i>Go to Login
+                </a>
+              </div>
+            </td>
+          </tr>
+        `;
+
+        // Update stats for no users
+        document.getElementById("total-users").textContent = "0";
+        document.getElementById("new-today").textContent = "0";
+        document.getElementById("new-week").textContent = "0";
       }
 
       function updateStats(users) {
@@ -195,11 +287,18 @@
       }
 
       function updateHealthStats(healthData) {
-        // API status
-        document.getElementById("db-status").textContent =
-          healthData.status === "ok" ? "Online" : "Error";
-        document.getElementById("db-status").className =
-          healthData.status === "ok" ? "text-success" : "text-danger";
+        // Local storage status
+        const isLocalStorageWorking = typeof Storage !== "undefined";
+        document.getElementById("db-status").textContent = isLocalStorageWorking
+          ? "Local"
+          : "Error";
+        document.getElementById("db-status").className = isLocalStorageWorking
+          ? "text-success"
+          : "text-danger";
+
+        // Update last updated time
+        document.getElementById("last-updated").textContent =
+          new Date().toLocaleString();
       }
 
       function updateUsersTable(users) {
@@ -416,6 +515,35 @@
 
       function refreshData() {
         loadAdminData();
+      }
+
+      function clearUserData() {
+        if (
+          confirm(
+            "Are you sure you want to clear all user data? This cannot be undone."
+          )
+        ) {
+          // Clear user-related localStorage items
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (
+              key === "username" ||
+              key.startsWith("username_") ||
+              key.startsWith("expenses_") ||
+              key.startsWith("budget_")
+            ) {
+              keysToRemove.push(key);
+            }
+          }
+
+          keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+          // Reload admin data
+          loadAdminData();
+
+          showSuccessMessage("User data cleared successfully");
+        }
       }
 
       async function testExternalAPI() {

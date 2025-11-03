@@ -305,6 +305,12 @@
         api("/login", { method: "POST", body: JSON.stringify(payload) })
           .then((data) => {
             localStorage.setItem("token", data.token);
+            
+            // Save username to localStorage for dashboard use
+            const userName = data.user?.name || data.user?.username || data.user?.displayName || "User";
+            localStorage.setItem("username", userName);
+            console.log("Username saved during login:", userName);
+            
             showSuccess("Login successful! Redirecting...");
             setTimeout(() => {
               window.location.href = "/dashboard";

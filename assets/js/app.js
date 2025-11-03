@@ -33,15 +33,15 @@
     daily_budget: 0.0,
   };
 
-  // LocalStorage helper functions
+  // LocalStorage functions
   const storage = {
-    // Get user-specific key
+   
     getUserKey(key) {
       const token = localStorage.getItem("token");
       if (!token) return key;
       
       try {
-        // Use token to create user-specific storage keys
+        
         const tokenData = JSON.parse(atob(token.split('.')[1]));
         const userId = tokenData.id || tokenData.userId || 'default';
         return `${key}_${userId}`;
@@ -54,9 +54,9 @@
     saveExpenses(expenses) {
       try {
         localStorage.setItem(this.getUserKey('expenses'), JSON.stringify(expenses));
-        console.log('Expenses saved to localStorage:', expenses.length);
+        
       } catch (err) {
-        console.error('Failed to save expenses to localStorage:', err);
+        
       }
     },
 
@@ -65,25 +65,25 @@
       try {
         const stored = localStorage.getItem(this.getUserKey('expenses'));
         const expenses = stored ? JSON.parse(stored) : [];
-        console.log('Expenses loaded from localStorage:', expenses.length);
+       
         return expenses;
       } catch (err) {
-        console.error('Failed to load expenses from localStorage:', err);
+      
         return [];
       }
     },
 
-    // Save budget to localStorage
+    // Save budget 
     saveBudget(budget) {
       try {
         localStorage.setItem(this.getUserKey('budget'), JSON.stringify(budget));
-        console.log('Budget saved to localStorage:', budget);
+       
       } catch (err) {
-        console.error('Failed to save budget to localStorage:', err);
+        
       }
     },
 
-    // Load budget from localStorage
+    // Load budget 
     loadBudget() {
       try {
         const stored = localStorage.getItem(this.getUserKey('budget'));
@@ -92,10 +92,10 @@
           weekly_budget: 250.0,
           daily_budget: 35.0
         };
-        console.log('Budget loaded from localStorage:', budget);
+        
         return budget;
       } catch (err) {
-        console.error('Failed to load budget from localStorage:', err);
+        
         return {
           monthly_budget: 1000.0,
           weekly_budget: 250.0,
@@ -104,28 +104,79 @@
       }
     },
 
+    // Save username to localStorage
+    saveUsername(username) {
+      try {
+        localStorage.setItem(this.getUserKey('username'), username);
+        
+      } catch (err) {
+      
+      }
+    },
+
+    // Load username from localStorage
+    loadUsername() {
+      try {
+        const stored = localStorage.getItem(this.getUserKey('username'));
+        
+        return stored || 'User';
+      } catch (err) {
+       
+        return 'User';
+      }
+    },
+
+    // Save username to localStorage
+    saveUsername(username) {
+      try {
+        localStorage.setItem('username', username);
+        
+      } catch (err) {
+        
+      }
+    },
+
+    // Load username from localStorage
+    loadUsername() {
+      try {
+        const username = localStorage.getItem('username') || 'User';
+        
+        return username;
+      } catch (err) {
+        
+        return 'User';
+      }
+    },
+
     // Clear user data (for logout)
     clearUserData() {
       try {
         localStorage.removeItem(this.getUserKey('expenses'));
         localStorage.removeItem(this.getUserKey('budget'));
-        console.log('User data cleared from localStorage');
+        localStorage.removeItem('username');
+        
       } catch (err) {
-        console.error('Failed to clear user data from localStorage:', err);
+      
       }
     }
   };
 
   function updateUserInfo(userName = "") {
-    console.log("updateUserInfo called with:", userName);
+   
+    
+    // Handle different possible name formats
+    const displayName = userName || storage.loadUsername();
+    
+    // Save username to localStorage for future use
+    if (userName && userName !== 'User') {
+      storage.saveUsername(userName);
+    }
     
     // Update sidebar user info
     const userNameSidebar = document.getElementById("user-name-sidebar");
     if (userNameSidebar) {
-      // Handle different possible name formats
-      const displayName = userName || "User";
       userNameSidebar.textContent = `Welcome, ${displayName.toUpperCase()}!`;
-      console.log("Updated sidebar with:", displayName);
+     
     } else {
       console.error("user-name-sidebar element not found");
     }
@@ -138,7 +189,7 @@
     const logoutBtn = e.target.closest("#logout-btn");
     const originalContent = logoutBtn.innerHTML;
 
-    // Update button to show loading
+    // Update button
     logoutBtn.disabled = true;
     logoutBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
     logoutBtn.title = "Logging out...";
@@ -146,16 +197,15 @@
     // Show logout toast
     showLogoutToast("Logging out...", "info");
 
-    // Simulate logout process (remove token and redirect)
+    
     setTimeout(() => {
       localStorage.removeItem("token");
       
-      // Clear user-specific data but keep it for when they log back in
-      // storage.clearUserData(); // Uncomment if you want to clear data on logout
+
       
       showLogoutToast("Logged out successfully!", "success");
 
-      // Redirect after a brief delay
+      
       setTimeout(() => {
         window.location.href = "/login";
       }, 800);
@@ -164,7 +214,7 @@
 
   // Logout toast function
   function showLogoutToast(message, type = "info") {
-    // Remove existing logout toast
+    
     const existingToast = document.getElementById("logout-toast");
     if (existingToast) {
       existingToast.remove();
@@ -217,25 +267,40 @@
   // Check authentication and load user info
   function checkAuth() {
     const token = localStorage.getItem("token");
-    console.log("Token found:", !!token);
+    
 
     if (!token) {
       console.log("No token found, redirecting to login");
-      // Redirect unauthenticated users to login page
+      
       window.location.href = "/login";
       return;
     }
 
     console.log("Checking token validity...");
+   
+    const storedUsername = storage.loadUsername();
+    if (storedUsername && storedUsername !== 'User') {
+      
+      updateUserInfo(storedUsername);
+      loadDashboardData();
+      setCurrentDate();
+      displayCurrentDate();
+      updateDailyIcon();
+      initializeEventListeners();
+      return;
+    }
+
+    // If no stored username, try to get it from API
     api("/me")
       .then((data) => {
-        console.log("Authentication successful:", data);
-        console.log("User data:", data.user);
-        console.log("User name:", data.user?.name);
+       
         
-        // Try different possible name fields
+       
         const userName = data.user?.name || data.user?.username || data.user?.displayName || "User";
-        console.log("Using name:", userName);
+        
+        
+        // Save username to localStorage
+        storage.saveUsername(userName);
         
         updateUserInfo(userName);
         loadDashboardData();
@@ -245,16 +310,15 @@
         initializeEventListeners();
       })
       .catch((err) => {
-        console.error("Authentication error:", err);
-        console.error("Full error object:", err);
+       
         localStorage.removeItem("token");
 
-        // Show user-friendly message before redirect
+       
         if (err.error === "Invalid token") {
           alert("Your session has expired. Please log in again.");
         }
 
-        // Redirect to login if token is invalid
+        
         window.location.href = "/login";
       });
   }
@@ -271,7 +335,9 @@
   // Display current date in the dashboard header
   function displayCurrentDate() {
     const currentDateElement = document.getElementById("current-date");
-    if (currentDateElement) {
+    const currentDateMobileElement = document.getElementById("current-date-mobile");
+    
+    if (currentDateElement || currentDateMobileElement) {
       const today = new Date();
       const options = {
         weekday: "long",
@@ -280,11 +346,18 @@
         day: "numeric",
       };
       const formattedDate = today.toLocaleDateString("en-US", options);
-      currentDateElement.textContent = formattedDate;
+      
+      // Update both desktop and mobile date displays
+      if (currentDateElement) {
+        currentDateElement.textContent = formattedDate;
+      }
+      if (currentDateMobileElement) {
+        currentDateMobileElement.textContent = formattedDate;
+      }
     }
   }
 
-  // Update daily icon to show current day
+  // Update daily icon 
   function updateDailyIcon() {
     const dailyIcon = document.getElementById("daily-icon");
     if (dailyIcon) {
@@ -295,7 +368,7 @@
       dailyIcon.innerHTML = dayOfMonth;
       dailyIcon.classList.add("dynamic-day");
 
-      // Add a tooltip showing the full date
+      
       const fullDate = today.toLocaleDateString("en-US", {
         weekday: "long",
         year: "numeric",
@@ -308,17 +381,16 @@
 
   // Initialize all event listeners
   function initializeEventListeners() {
-    // Add expense form
+
     document
       .getElementById("expense-form")
       .addEventListener("submit", handleAddExpense);
 
-    // Period selector buttons
     document.querySelectorAll(".period-btn").forEach((btn) => {
       btn.addEventListener("click", handlePeriodChange);
     });
 
-    // Quick add button (if exists)
+    
     const quickAddBtn = document.getElementById("quick-add-btn");
     if (quickAddBtn) {
       quickAddBtn.addEventListener("click", () => {
@@ -332,7 +404,7 @@
 
   // Initialize sidebar navigation functionality
   function initializeSidebarNavigation() {
-    // Sidebar toggle functionality
+    
     const sidebarToggle = document.getElementById("sidebar-toggle");
     const sidebar = document.getElementById("sidebar");
     const mainContent = document.querySelector(".main-content");
@@ -385,7 +457,7 @@
     const quickActionBtns = document.querySelectorAll("[data-section]");
     quickActionBtns.forEach((btn) => {
       if (!btn.classList.contains("nav-link")) {
-        // Avoid duplicate listeners
+       
         btn.addEventListener("click", (e) => {
           const targetSection = btn.getAttribute("data-section");
           navigateToSection(targetSection, true);
@@ -402,17 +474,17 @@
     // Handle browser back/forward navigation
     window.addEventListener("popstate", (e) => {
       const section = e.state?.section || getCurrentSectionFromUrl();
-      navigateToSection(section, false); // false = don't push to history
+      navigateToSection(section, false); 
     });
 
-    // Initialize correct section based on current URL
+    
     const initialSection = getCurrentSectionFromUrl();
     if (initialSection !== "dashboard") {
       navigateToSection(initialSection, false);
     }
   }
 
-  // Get current section from URL
+
   function getCurrentSectionFromUrl() {
     const path = window.location.pathname;
     const match = path.match(/\/dashboard\/(.+)/);
@@ -456,7 +528,7 @@
       pageTitle.textContent = sectionTitles[targetSection] || "Dashboard";
     }
 
-    // Update URL with history push state (only if requested)
+    
     if (pushHistory) {
       const newUrl =
         targetSection === "dashboard"
@@ -465,15 +537,15 @@
       history.pushState({ section: targetSection }, "", newUrl);
     }
 
-    // Handle section-specific actions
+   
     handleSectionSwitch(targetSection);
   }
 
-  // Handle section-specific actions when switching
+  
   function handleSectionSwitch(section) {
     switch (section) {
       case "dashboard":
-        // Refresh dashboard data
+       
         loadDashboardData();
         break;
       case "expenses":
@@ -497,7 +569,7 @@
         }
         break;
       case "categories":
-        // Load categories data
+        
         loadCategories();
         break;
     }
@@ -563,7 +635,7 @@
       showSuccessToast("Expense added successfully!");
       
     } catch (err) {
-      console.error('Error adding expense:', err);
+      
       showErrorToast("Failed to add expense");
     } finally {
       submitBtn.disabled = false;
@@ -593,7 +665,7 @@
         hideLoadingState();
       })
       .catch((err) => {
-        console.error("Error loading dashboard data:", err);
+       
         hideLoadingState();
       });
   }
@@ -643,7 +715,7 @@
         resolve();
         
       } catch (err) {
-        console.error("loadExpenses error:", err);
+    
         const container = document.getElementById("expense-list");
         container.innerHTML = `
           <div class="text-center text-danger py-4">
@@ -893,7 +965,7 @@
         resolve();
         
       } catch (err) {
-        console.error("Report loading error:", err);
+        
         document.getElementById("report-output").innerHTML = `
           <div class="text-center text-danger py-4">
             <i class="bi bi-exclamation-triangle fs-1 mb-3 d-block"></i>
@@ -945,7 +1017,7 @@
 
   // Load and update stats cards
   function loadStats() {
-    console.log("Loading stats with expenses:", currentExpenses.length);
+   
 
     if (currentExpenses.length === 0) {
       updateStatsCards({
@@ -962,15 +1034,11 @@
     const today = new Date().toISOString().split("T")[0];
     const thisMonth = new Date().toISOString().slice(0, 7);
 
-    console.log("Today:", today, "This month:", thisMonth);
-    console.log(
-      "Sample expense dates:",
-      currentExpenses.slice(0, 3).map((e) => e.date)
-    );
+    
 
     // Calculate total spent this month
     const monthlyExpenses = currentExpenses.filter((e) => {
-      const expenseDate = e.date.split("T")[0]; // Handle both date formats
+      const expenseDate = e.date.split("T")[0]; 
       return expenseDate.startsWith(thisMonth);
     });
     const totalSpent = monthlyExpenses.reduce(
@@ -1025,14 +1093,6 @@
 
     const topCategoryAmount = categoryTotals[topCategory] || 0;
 
-    console.log("Calculated stats:", {
-      totalSpent,
-      todaySpent,
-      todayCount: todayExpenses.length,
-      avgDaily,
-      topCategory,
-      topCategoryAmount,
-    });
 
     updateStatsCards({
       totalSpent,
@@ -1093,7 +1153,7 @@
     showToast(message, "danger");
   }
 
-  // Create toast container if it doesn't exist
+  // Create toast container 
   function getToastContainer() {
     let container = document.getElementById("toast-container");
     if (!container) {
@@ -1137,17 +1197,17 @@
       </div>
     `;
 
-    // Add to container (will stack vertically)
+    
     container.appendChild(toast);
 
-    // Auto remove after 4 seconds
+   
     setTimeout(() => {
       if (toast.parentNode) {
         toast.style.animation = "slideOutRight 0.3s ease-in";
         setTimeout(() => {
           if (toast.parentNode) {
             toast.remove();
-            // Remove container if empty
+           
             if (container.children.length === 0) {
               container.remove();
             }
@@ -1156,14 +1216,14 @@
       }
     }, 4000);
 
-    // Handle manual close
+   
     const closeBtn = toast.querySelector(".btn-close");
     closeBtn.addEventListener("click", () => {
       toast.style.animation = "slideOutRight 0.3s ease-in";
       setTimeout(() => {
         if (toast.parentNode) {
           toast.remove();
-          // Remove container if empty
+          
           if (container.children.length === 0) {
             container.remove();
           }
@@ -1180,7 +1240,7 @@
       return;
     }
 
-    // Populate the existing modal with expense data
+    
     const form = document.getElementById("edit-expense-form");
     form.querySelector('input[name="amount"]').value = expense.amount;
     form.querySelector('select[name="category"]').value = expense.category;
@@ -1192,14 +1252,14 @@
       .getElementById("save-expense-edit")
       .setAttribute("data-expense-id", expenseId);
 
-    // Show the modal
+    
     const modal = new bootstrap.Modal(
       document.getElementById("editExpenseModal")
     );
     modal.show();
   };
 
-  // Save expense edit - updated to work with the HTML modal
+
   function saveExpenseEdit() {
     const saveBtn = document.getElementById("save-expense-edit");
     const expenseId = saveBtn.getAttribute("data-expense-id");
@@ -1324,7 +1384,7 @@
         showErrorToast("Expense not found");
       }
     } catch (err) {
-      console.error("Error deleting expense:", err);
+     
       showErrorToast("Failed to delete expense");
     } finally {
       deleteBtn.disabled = false;
@@ -1340,8 +1400,7 @@
         updateBudgetDisplay();
         resolve();
       } catch (err) {
-        console.error("Error loading budget:", err);
-        // Use default budget if loading fails
+       
         userBudget = {
           monthly_budget: 1000.0,
           weekly_budget: 250.0,
@@ -1365,7 +1424,7 @@
       "monthly-budget"
     ).textContent = `₦${userBudget.monthly_budget.toFixed(2)}`;
 
-    // Monthly Remaining will be calculated by updateBudgetProgress()
+    // Monthly Remaining will be calculated 
 
     // Also update the form inputs
     const monthlyInput = document.querySelector('input[name="monthly_budget"]');
@@ -1380,7 +1439,7 @@
   // Update budget progress bars
   function updateBudgetProgress() {
     if (currentExpenses.length === 0) {
-      // If no expenses, remaining = full budget
+     
       const remainingElement = document.getElementById("budget-remaining");
       if (remainingElement) {
         remainingElement.className = "fw-bold text-success";
@@ -1397,7 +1456,7 @@
     // Calculate current week (Monday to Sunday)
     const now = new Date();
     const dayOfWeek = now.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Handle Sunday as 0
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; 
     const monday = new Date(now);
     monday.setDate(now.getDate() + mondayOffset);
     const weekStart = monday.toISOString().split("T")[0];
@@ -1438,7 +1497,7 @@
 
     remainingElement.textContent = `₦${Math.abs(monthlyRemaining).toFixed(2)}`;
 
-    // Enhanced color coding for remaining budget
+    
     if (monthlyRemaining < 0) {
       remainingElement.className = "fw-bold text-danger";
       remainingElement.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>-₦${Math.abs(
@@ -1472,12 +1531,12 @@
 
     // Enhanced color coding with smooth transitions
     if (actualPercentage >= 100) {
-      // Exceeded budget - danger red with animation
+      
       progressBar.className =
         "progress-bar bg-danger progress-bar-striped progress-bar-animated";
       progressBar.style.background = "linear-gradient(45deg, #dc3545, #c82333)";
     } else if (actualPercentage >= 90) {
-      // Very close to limit - warning red
+      
       progressBar.className = "progress-bar";
       progressBar.style.background = "linear-gradient(90deg, #fd7e14, #dc3545)";
     } else if (actualPercentage >= 75) {
@@ -1505,14 +1564,14 @@
     updateBudgetTextColor(elementId, actualPercentage, spent, budget);
   }
 
-  // Update budget text colors based on spending status
+ 
   function updateBudgetTextColor(elementId, percentage, spent, budget) {
     const budgetType = elementId.replace("-progress", "");
     const budgetElement = document.getElementById(`${budgetType}-budget`);
     const parentContainer = budgetElement?.closest(".mb-3");
 
     if (parentContainer) {
-      // Remove existing status classes
+      
       parentContainer.classList.remove(
         "budget-safe",
         "budget-warning",
@@ -1551,7 +1610,7 @@
         )}`;
       }
     } else {
-      // Remove exceeded amount display if back under budget
+      
       const exceededElement =
         parentContainer?.querySelector(".exceeded-amount");
       if (exceededElement) {
@@ -1562,7 +1621,7 @@
 
   // Open budget modal
   window.openBudgetModal = function () {
-    // Pre-fill form with current budget
+    
     document.querySelector('input[name="monthly_budget"]').value =
       userBudget.monthly_budget;
     document.querySelector('input[name="weekly_budget"]').value =
@@ -1575,7 +1634,7 @@
   };
 
   // Save budget settings
-  // Auto-calculate weekly and daily budgets when monthly budget changes
+  
   function setupBudgetAutoCalculation() {
     const monthlyInput = document.querySelector('input[name="monthly_budget"]');
     const weeklyInput = document.querySelector('input[name="weekly_budget"]');
@@ -1585,9 +1644,9 @@
       monthlyInput.addEventListener("input", function () {
         const monthlyAmount = parseFloat(this.value) || 0;
         if (monthlyAmount > 0) {
-          // Calculate weekly budget (monthly ÷ 4.33 weeks per month)
+        
           const weeklyAmount = monthlyAmount / 4.33;
-          // Calculate daily budget (monthly ÷ 30 days per month)
+         
           const dailyAmount = monthlyAmount / 30;
 
           // Update the input fields
@@ -2124,7 +2183,7 @@
         ?.textContent?.replace("Welcome, ", "")
         .replace("!", "") || "User";
 
-    // Sort expenses by date (newest first for bank statement style)
+    // Sort expenses by date 
     const sortedExpenses = [...currentExpenses].sort(
       (a, b) => new Date(b.date) - new Date(a.date)
     );
@@ -2181,9 +2240,9 @@
     );
     const remainingBalance = monthlyBudget - totalExpenses;
 
-    doc.text(`Opening Balance: ₦${monthlyBudget.toFixed(2)}`, 25, 91);
-    doc.text(`Total Expenses: ₦${totalExpenses.toFixed(2)}`, 100, 91);
-    doc.text(`Closing Balance: ₦${remainingBalance.toFixed(2)}`, 25, 97);
+    doc.text(`Opening Balance: NGN ${monthlyBudget.toFixed(2)}`, 25, 91);
+    doc.text(`Total Expenses: NGN ${totalExpenses.toFixed(2)}`, 100, 91);
+    doc.text(`Closing Balance: NGN ${remainingBalance.toFixed(2)}`, 25, 97);
     doc.text(`Number of Transactions: ${sortedExpenses.length}`, 100, 97);
 
     // Transaction Table Header
@@ -2275,15 +2334,15 @@
 
       // Amount in red (debit)
       doc.setTextColor(220, 53, 69);
-      doc.text(`-₦${amount.toFixed(2)}`, 150, yPosition);
+      doc.text(`-NGN ${amount.toFixed(2)}`, 150, yPosition);
 
       // Balance
       if (runningBalance >= 0) {
-        doc.setTextColor(40, 167, 69); // Green for positive balance
+        doc.setTextColor(40, 167, 69);
       } else {
-        doc.setTextColor(220, 53, 69); // Red for negative balance
+        doc.setTextColor(220, 53, 69); 
       }
-      doc.text(`₦${runningBalance.toFixed(2)}`, 175, yPosition);
+      doc.text(`NGN ${runningBalance.toFixed(2)}`, 175, yPosition);
 
       yPosition += 6;
     });
@@ -2308,9 +2367,9 @@
 
     doc.setFont(undefined, "normal");
     doc.setFontSize(8);
-    doc.text(`Total Debits: ₦${totalExpenses.toFixed(2)}`, 25, yPosition);
+    doc.text(`Total Debits: NGN ${totalExpenses.toFixed(2)}`, 25, yPosition);
     doc.text(
-      `Account Balance: ₦${remainingBalance.toFixed(2)}`,
+      `Account Balance: NGN ${remainingBalance.toFixed(2)}`,
       25,
       yPosition + 6
     );
