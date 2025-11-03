@@ -33,11 +33,101 @@
     daily_budget: 0.0,
   };
 
+  // LocalStorage helper functions
+  const storage = {
+    // Get user-specific key
+    getUserKey(key) {
+      const token = localStorage.getItem("token");
+      if (!token) return key;
+      
+      try {
+        // Use token to create user-specific storage keys
+        const tokenData = JSON.parse(atob(token.split('.')[1]));
+        const userId = tokenData.id || tokenData.userId || 'default';
+        return `${key}_${userId}`;
+      } catch (err) {
+        return `${key}_default`;
+      }
+    },
+
+    // Save expenses to localStorage
+    saveExpenses(expenses) {
+      try {
+        localStorage.setItem(this.getUserKey('expenses'), JSON.stringify(expenses));
+        console.log('Expenses saved to localStorage:', expenses.length);
+      } catch (err) {
+        console.error('Failed to save expenses to localStorage:', err);
+      }
+    },
+
+    // Load expenses from localStorage
+    loadExpenses() {
+      try {
+        const stored = localStorage.getItem(this.getUserKey('expenses'));
+        const expenses = stored ? JSON.parse(stored) : [];
+        console.log('Expenses loaded from localStorage:', expenses.length);
+        return expenses;
+      } catch (err) {
+        console.error('Failed to load expenses from localStorage:', err);
+        return [];
+      }
+    },
+
+    // Save budget to localStorage
+    saveBudget(budget) {
+      try {
+        localStorage.setItem(this.getUserKey('budget'), JSON.stringify(budget));
+        console.log('Budget saved to localStorage:', budget);
+      } catch (err) {
+        console.error('Failed to save budget to localStorage:', err);
+      }
+    },
+
+    // Load budget from localStorage
+    loadBudget() {
+      try {
+        const stored = localStorage.getItem(this.getUserKey('budget'));
+        const budget = stored ? JSON.parse(stored) : {
+          monthly_budget: 1000.0,
+          weekly_budget: 250.0,
+          daily_budget: 35.0
+        };
+        console.log('Budget loaded from localStorage:', budget);
+        return budget;
+      } catch (err) {
+        console.error('Failed to load budget from localStorage:', err);
+        return {
+          monthly_budget: 1000.0,
+          weekly_budget: 250.0,
+          daily_budget: 35.0
+        };
+      }
+    },
+
+    // Clear user data (for logout)
+    clearUserData() {
+      try {
+        localStorage.removeItem(this.getUserKey('expenses'));
+        localStorage.removeItem(this.getUserKey('budget'));
+        console.log('User data cleared from localStorage');
+      } catch (err) {
+        console.error('Failed to clear user data from localStorage:', err);
+      }
+    }
+  };
+
   function updateUserInfo(userName = "") {
+    console.log("updateUserInfo called with:", userName);
+    
     // Update sidebar user info
     const userNameSidebar = document.getElementById("user-name-sidebar");
     if (userNameSidebar) {
-      userNameSidebar.textContent = `Welcome, ${userName.toUpperCase()}!`;
+      // Handle different possible name formats
+      const displayName = userName || "User";
+      userNameSidebar.textContent = `Welcome, ${displayName.toUpperCase()}!`;
+      console.log("Updated sidebar with:", displayName);
+    } else {
+      console.error("user-name-sidebar element not found");
     }
   }
 
@@ -59,6 +149,10 @@
     // Simulate logout process (remove token and redirect)
     setTimeout(() => {
       localStorage.removeItem("token");
+      
+      // Clear user-specific data but keep it for when they log back in
+      // storage.clearUserData(); // Uncomment if you want to clear data on logout
+      
       showLogoutToast("Logged out successfully!", "success");
 
       // Redirect after a brief delay
@@ -136,7 +230,14 @@
     api("/me")
       .then((data) => {
         console.log("Authentication successful:", data);
-        updateUserInfo(data.user.name);
+        console.log("User data:", data.user);
+        console.log("User name:", data.user?.name);
+        
+        // Try different possible name fields
+        const userName = data.user?.name || data.user?.username || data.user?.displayName || "User";
+        console.log("Using name:", userName);
+        
+        updateUserInfo(userName);
         loadDashboardData();
         setCurrentDate();
         displayCurrentDate();
@@ -426,10 +527,10 @@
     e.preventDefault();
     const fd = new FormData(e.target);
     const payload = {
-      amount: fd.get("amount"),
+      amount: parseFloat(fd.get("amount")),
       category: fd.get("category"),
       note: fd.get("note"),
-      date: fd.get("date") || undefined,
+      date: fd.get("date") || new Date().toISOString().split('T')[0],
     };
 
     // Show loading state
@@ -438,20 +539,36 @@
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Adding...';
 
-    api("/expenses", { method: "POST", body: JSON.stringify(payload) })
-      .then(() => {
-        e.target.reset();
-        setCurrentDate();
-        loadDashboardData();
-        showSuccessToast("Expense added successfully!");
-      })
-      .catch((err) => {
-        showErrorToast(err.error || "Failed to add expense");
-      })
-      .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-      });
+    try {
+      // Create expense object
+      const expense = {
+        id: Date.now(),
+        amount: payload.amount,
+        category: payload.category || 'Other',
+        note: payload.note || '',
+        date: payload.date,
+        created_at: new Date().toISOString()
+      };
+
+      // Add to current expenses
+      currentExpenses.unshift(expense);
+      
+      // Save to localStorage
+      storage.saveExpenses(currentExpenses);
+      
+      // Update UI
+      e.target.reset();
+      setCurrentDate();
+      loadDashboardData();
+      showSuccessToast("Expense added successfully!");
+      
+    } catch (err) {
+      console.error('Error adding expense:', err);
+      showErrorToast("Failed to add expense");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
   }
 
   // Handle period change
@@ -493,15 +610,17 @@
 
   // Load expenses
   function loadExpenses() {
-    return api("/expenses/list")
-      .then((rows) => {
-        currentExpenses = rows;
+    return new Promise((resolve) => {
+      try {
+        // Load from localStorage
+        currentExpenses = storage.loadExpenses();
+        
         const container = document.getElementById("expense-list");
         const countBadge = document.getElementById("expense-count");
 
-        countBadge.textContent = `${rows.length} expenses`;
+        countBadge.textContent = `${currentExpenses.length} expenses`;
 
-        if (rows.length === 0) {
+        if (currentExpenses.length === 0) {
           container.innerHTML = `
             <div class="text-center text-muted py-4">
               <i class="bi bi-receipt fs-1 mb-3 d-block"></i>
@@ -509,20 +628,22 @@
               <small>Add your first expense to get started!</small>
             </div>
           `;
+          resolve();
           return;
         }
 
         container.innerHTML = "";
-        rows.forEach((expense, index) => {
+        currentExpenses.forEach((expense, index) => {
           const expenseElement = createExpenseElement(expense, index);
           container.appendChild(expenseElement);
         });
 
         // Also update Recent Activity on dashboard
-        updateRecentActivity(rows.slice(0, 5)); // Show last 5 expenses
-      })
-      .catch((err) => {
-        console.log("loadExpenses error:", err);
+        updateRecentActivity(currentExpenses.slice(0, 5)); // Show last 5 expenses
+        resolve();
+        
+      } catch (err) {
+        console.error("loadExpenses error:", err);
         const container = document.getElementById("expense-list");
         container.innerHTML = `
           <div class="text-center text-danger py-4">
@@ -530,7 +651,9 @@
             <p>Error loading expenses</p>
           </div>
         `;
-      });
+        resolve();
+      }
+    });
   }
 
   function createExpenseElement(expense, index) {
@@ -718,8 +841,12 @@
 
   // Load reports with enhanced visualization
   function loadReports() {
-    return api(`/reports?period=${currentPeriod}`)
-      .then((rows) => {
+    return new Promise((resolve) => {
+      try {
+        // Generate reports from localStorage data
+        const expenses = storage.loadExpenses();
+        const rows = generateReportsFromExpenses(expenses, currentPeriod);
+        
         // Store data for PDF generation
         window.currentReportData = rows || [];
         const output = document.getElementById("report-output");
@@ -731,6 +858,7 @@
               <p>No data available for ${currentPeriod} view</p>
             </div>
           `;
+          resolve();
           return;
         }
 
@@ -738,9 +866,7 @@
         let html = '<div class="report-data">';
 
         rows.slice(0, 10).forEach((row, index) => {
-          const periodLabel =
-            row.period ||
-            (row.year && row.week ? `${row.year}-W${row.week}` : "");
+          const periodLabel = row.period || "";
           const amount = parseFloat(row.total || 0);
           const maxAmount = Math.max(
             ...rows.map((r) => parseFloat(r.total || 0))
@@ -764,8 +890,9 @@
 
         html += "</div>";
         output.innerHTML = html;
-      })
-      .catch((err) => {
+        resolve();
+        
+      } catch (err) {
         console.error("Report loading error:", err);
         document.getElementById("report-output").innerHTML = `
           <div class="text-center text-danger py-4">
@@ -773,7 +900,47 @@
             <p>Error loading reports</p>
           </div>
         `;
-      });
+        resolve();
+      }
+    });
+  }
+
+  // Generate reports from expenses data
+  function generateReportsFromExpenses(expenses, period) {
+    if (!expenses || expenses.length === 0) return [];
+
+    const reports = {};
+    
+    expenses.forEach(expense => {
+      const date = new Date(expense.date);
+      let periodKey;
+      
+      switch (period) {
+        case 'weekly':
+          const weekStart = new Date(date);
+          weekStart.setDate(date.getDate() - date.getDay());
+          periodKey = weekStart.toISOString().split('T')[0];
+          break;
+        case 'monthly':
+          periodKey = date.toISOString().slice(0, 7); // YYYY-MM
+          break;
+        default: // daily
+          periodKey = expense.date.split('T')[0];
+      }
+      
+      if (!reports[periodKey]) {
+        reports[periodKey] = {
+          period: periodKey,
+          total: 0
+        };
+      }
+      
+      reports[periodKey].total += parseFloat(expense.amount || 0);
+    });
+    
+    return Object.values(reports)
+      .sort((a, b) => new Date(b.period) - new Date(a.period))
+      .slice(0, 10);
   }
 
   // Load and update stats cards
@@ -1138,34 +1305,52 @@
     deleteBtn.innerHTML =
       '<i class="bi bi-hourglass-split me-2"></i>Deleting...';
 
-    api(`/expenses/${expenseId}`, { method: "DELETE" })
-      .then(() => {
+    try {
+      // Remove from currentExpenses array
+      const expenseIndex = currentExpenses.findIndex(e => e.id == expenseId);
+      if (expenseIndex > -1) {
+        currentExpenses.splice(expenseIndex, 1);
+        
+        // Save updated expenses to localStorage
+        storage.saveExpenses(currentExpenses);
+        
         const modal = bootstrap.Modal.getInstance(
           document.getElementById("deleteExpenseModal")
         );
         modal.hide();
         loadDashboardData();
         showSuccessToast("Expense deleted successfully!");
-      })
-      .catch((err) => {
-        showErrorToast(err.error || "Failed to delete expense");
-        deleteBtn.disabled = false;
-        deleteBtn.innerHTML = originalText;
-      });
+      } else {
+        showErrorToast("Expense not found");
+      }
+    } catch (err) {
+      console.error("Error deleting expense:", err);
+      showErrorToast("Failed to delete expense");
+    } finally {
+      deleteBtn.disabled = false;
+      deleteBtn.innerHTML = originalText;
+    }
   };
 
   // Load user budget
   function loadBudget() {
-    return api("/budget")
-      .then((budget) => {
-        userBudget = budget;
+    return new Promise((resolve) => {
+      try {
+        userBudget = storage.loadBudget();
         updateBudgetDisplay();
-      })
-      .catch((err) => {
+        resolve();
+      } catch (err) {
         console.error("Error loading budget:", err);
         // Use default budget if loading fails
+        userBudget = {
+          monthly_budget: 1000.0,
+          weekly_budget: 250.0,
+          daily_budget: 35.0
+        };
         updateBudgetDisplay();
-      });
+        resolve();
+      }
+    });
   }
 
   // Update budget display
@@ -1433,11 +1618,6 @@
       daily_budget: parseFloat(fd.get("daily_budget")),
     };
 
-    console.log("Form data:", {
-      monthly_budget: fd.get("monthly_budget"),
-      weekly_budget: fd.get("weekly_budget"),
-      daily_budget: fd.get("daily_budget"),
-    });
     console.log("Parsed payload:", payload);
 
     // Validate inputs
@@ -1461,7 +1641,7 @@
       return;
     }
 
-    // Show loading state - find the correct save button
+    // Show loading state
     const saveBtn =
       document.querySelector("#budget-form .btn-primary") ||
       document.querySelector('button[onclick="saveBudgetSettings()"]');
@@ -1475,26 +1655,29 @@
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
 
-    console.log("Saving budget:", payload);
-
-    api("/budget", {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    })
-      .then((budget) => {
-        console.log("Budget saved successfully:", budget);
-        userBudget = budget;
-        updateBudgetDisplay();
-        updateBudgetProgress();
-        showSuccessToast("Budget settings updated successfully!");
-      })
-      .catch((err) => {
-        showErrorToast(err.error || "Failed to update budget settings");
-      })
-      .finally(() => {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalText;
-      });
+    try {
+      // Save to localStorage
+      userBudget = {
+        id: Date.now(),
+        monthly_budget: payload.monthly_budget,
+        weekly_budget: payload.weekly_budget,
+        daily_budget: payload.daily_budget,
+        updated_at: new Date().toISOString()
+      };
+      
+      storage.saveBudget(userBudget);
+      
+      updateBudgetDisplay();
+      updateBudgetProgress();
+      showSuccessToast("Budget settings updated successfully!");
+      
+    } catch (err) {
+      console.error("Error saving budget:", err);
+      showErrorToast("Failed to update budget settings");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    }
   };
 
   // Check for budget alerts

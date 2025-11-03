@@ -75,6 +75,7 @@ async function authMiddleware(req, res, next) {
     // First try to verify with our local JWT_SECRET (for tokens we issued)
     try {
       const payload = jwt.verify(token, JWT_SECRET);
+      console.log('Local JWT payload:', payload);
       req.user = payload;
       return next();
     } catch (localErr) {
@@ -92,6 +93,7 @@ async function authMiddleware(req, res, next) {
     
     if (response.ok) {
       const userData = await response.json();
+      console.log('External API user data:', userData);
       req.user = userData.user || userData;
       return next();
     }
@@ -100,6 +102,7 @@ async function authMiddleware(req, res, next) {
     // (This is less secure but allows the app to work)
     try {
       const decoded = jwt.decode(token);
+      console.log('Decoded token:', decoded);
       if (decoded && decoded.exp && decoded.exp > Date.now() / 1000) {
         req.user = decoded;
         return next();
@@ -281,14 +284,68 @@ app.get('/api/reports', authMiddleware, (req, res) => {
 // Debug endpoint for external API users
 app.get('/api/debug/users', async (req, res) => {
   try {
-    // Since we don't have direct access to external API users,
-    // we'll return mock data or info about current session
-    res.json({
-      message: 'Using external API for authentication',
-      api_endpoint: 'https://testapi-touo.onrender.com',
-      mode: 'External API Mode',
-      note: 'User data is managed by external API'
-    });
+    // Try to fetch users from external API
+    const possibleEndpoints = [
+      'https://testapi-touo.onrender.com/api/users',
+      'https://testapi-touo.onrender.com/api/auth/users',
+      'https://testapi-touo.onrender.com/users',
+      'https://testapi-touo.onrender.com/api/admin/users'
+    ];
+    
+    let users = [];
+    let successEndpoint = null;
+    let attempts = [];
+    
+    for (const endpoint of possibleEndpoints) {
+      try {
+        console.log(`Trying to fetch users from: ${endpoint}`);
+        const response = await fetch(endpoint);
+        
+        attempts.push({
+          endpoint,
+          status: response.status,
+          ok: response.ok
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Response from ${endpoint}:`, data);
+          
+          if (data && (Array.isArray(data) || data.users || data.data)) {
+            users = Array.isArray(data) ? data : (data.users || data.data || []);
+            successEndpoint = endpoint;
+            console.log(`Successfully fetched ${users.length} users from ${endpoint}`);
+            break;
+          }
+        }
+      } catch (err) {
+        console.log(`Failed to fetch from ${endpoint}:`, err.message);
+        attempts.push({
+          endpoint,
+          status: 'Error',
+          error: err.message
+        });
+      }
+    }
+    
+    if (users.length > 0) {
+      res.json({
+        success: true,
+        users,
+        count: users.length,
+        source: successEndpoint,
+        attempts
+      });
+    } else {
+      res.json({
+        success: false,
+        message: 'No users found from external API',
+        api_endpoint: 'https://testapi-touo.onrender.com',
+        mode: 'External API Mode',
+        attempts,
+        note: 'User data is managed by external API but no accessible endpoint found'
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
