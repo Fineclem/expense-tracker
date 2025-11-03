@@ -2398,7 +2398,7 @@
     }.pdf`;
     doc.save(fileName);
 
-    showSuccessToast("Bank statement downloaded successfully!");
+    showSuccessToast("Fineclem_expense_statement downloaded successfully!");
   };
 
   // Save Budget Settings function
